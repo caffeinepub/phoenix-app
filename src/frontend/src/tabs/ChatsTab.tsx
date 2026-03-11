@@ -1,15 +1,21 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
@@ -19,6 +25,8 @@ import {
   Play,
   Plus,
   Send,
+  UserPlus,
+  Users,
   Video,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -53,6 +61,51 @@ const SAMPLE_CHATS = [
     timestamp: BigInt(Date.now()),
     initials: "MA",
     color: "bg-muted",
+  },
+];
+
+const SAMPLE_CONTACTS = [
+  {
+    id: "1",
+    name: "James Okafor",
+    initials: "JO",
+    color: "bg-blue-500",
+    phonexId: "PXP-AB12CD34",
+  },
+  {
+    id: "2",
+    name: "Sara Müller",
+    initials: "SM",
+    color: "bg-rose-500",
+    phonexId: "PXP-EF56GH78",
+  },
+  {
+    id: "3",
+    name: "Liu Wei",
+    initials: "LW",
+    color: "bg-violet-500",
+    phonexId: "PXP-IJ90KL12",
+  },
+  {
+    id: "4",
+    name: "Amina Hassan",
+    initials: "AH",
+    color: "bg-emerald-500",
+    phonexId: "PXP-MN34OP56",
+  },
+  {
+    id: "5",
+    name: "Carlos Mendez",
+    initials: "CM",
+    color: "bg-orange-500",
+    phonexId: "PXP-QR78ST90",
+  },
+  {
+    id: "6",
+    name: "Yuki Tanaka",
+    initials: "YT",
+    color: "bg-teal-500",
+    phonexId: "PXP-UV12WX34",
   },
 ];
 
@@ -553,6 +606,7 @@ function NewNoteDialog({
 }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState<NotePickerStep>("pick");
   const [to, setTo] = useState("");
+  const [contactPickerOpen, setContactPickerOpen] = useState(false);
   const [textBody, setTextBody] = useState("");
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -566,6 +620,7 @@ function NewNoteDialog({
     setRecording(false);
     setElapsed(0);
     setVideoProgress(0);
+    setContactPickerOpen(false);
     if (timerRef.current) clearInterval(timerRef.current);
   }
 
@@ -640,36 +695,40 @@ function NewNoteDialog({
   ];
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onOpenChange={(v) => {
         if (!v) handleClose();
       }}
     >
-      <DialogContent data-ocid="chats.new_note.dialog" className="sm:max-w-sm">
+      <SheetContent
+        side="bottom"
+        data-ocid="chats.new_note.dialog"
+        className="rounded-t-3xl max-h-[55vh] overflow-y-auto px-3 pb-4"
+      >
         {step === "pick" && (
           <>
-            <DialogHeader>
-              <DialogTitle className="font-display font-bold text-foreground">
+            <SheetHeader>
+              <SheetTitle className="font-display font-bold text-foreground">
                 New Message
-              </DialogTitle>
-            </DialogHeader>
+              </SheetTitle>
+            </SheetHeader>
             <p className="text-sm text-muted-foreground -mt-1 mb-1">
               Choose a note type to send
             </p>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {noteTypes.map(({ type, Icon, label, desc, color }) => (
                 <button
                   key={type}
                   type="button"
                   data-ocid={`chats.new_note.${type}_button`}
                   onClick={() => setStep(type)}
-                  className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-secondary hover:bg-accent/50 active:scale-[0.98] transition-all text-left"
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-secondary hover:bg-accent/50 active:scale-[0.98] transition-all text-left"
                 >
                   <div
-                    className={`w-10 h-10 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
+                    className={`w-8 h-8 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
                   >
-                    <Icon className="w-5 h-5 text-white" />
+                    <Icon className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground text-sm">
@@ -693,7 +752,7 @@ function NewNoteDialog({
 
         {step === "text" && (
           <>
-            <DialogHeader>
+            <SheetHeader>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -703,24 +762,77 @@ function NewNoteDialog({
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <DialogTitle className="font-display font-bold text-foreground">
+                <SheetTitle className="font-display font-bold text-foreground">
                   Text Note
-                </DialogTitle>
+                </SheetTitle>
               </div>
-            </DialogHeader>
+            </SheetHeader>
             <div className="flex flex-col gap-3 py-1">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="note-to" className="text-sm font-medium">
                   To
                 </Label>
-                <Input
-                  id="note-to"
-                  data-ocid="chats.new_note.text.to_input"
-                  placeholder="Contact name..."
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="note-to"
+                    data-ocid="chats.new_note.text.to_input"
+                    placeholder="Contact name or ID..."
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    data-ocid="chats.recipient_from_contacts_button"
+                    onClick={() => setContactPickerOpen(true)}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors flex-shrink-0 border border-primary/20"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Contacts
+                  </button>
+                </div>
               </div>
+              {/* Contact picker dialog */}
+              <Dialog
+                open={contactPickerOpen}
+                onOpenChange={setContactPickerOpen}
+              >
+                <DialogContent className="max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle className="font-display font-bold">
+                      Select Contact
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                    {SAMPLE_CONTACTS.map((contact, idx) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        data-ocid={`chats.contact.select_button.${idx + 1}`}
+                        onClick={() => {
+                          setTo(contact.phonexId);
+                          setContactPickerOpen(false);
+                        }}
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/50 transition-colors text-left border border-border hover:border-primary/30"
+                      >
+                        <div
+                          className={`w-9 h-9 rounded-full ${contact.color} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
+                        >
+                          {contact.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-foreground">
+                            {contact.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {contact.phonexId}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="note-body" className="text-sm font-medium">
                   Message
@@ -735,7 +847,7 @@ function NewNoteDialog({
                 />
               </div>
             </div>
-            <DialogFooter className="gap-2">
+            <div className="flex gap-2 justify-end mt-2">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.text.cancel_button"
@@ -751,13 +863,13 @@ function NewNoteDialog({
               >
                 <Send className="w-4 h-4 mr-1" /> Send
               </Button>
-            </DialogFooter>
+            </div>
           </>
         )}
 
         {step === "voice" && (
           <>
-            <DialogHeader>
+            <SheetHeader>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -770,11 +882,11 @@ function NewNoteDialog({
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <DialogTitle className="font-display font-bold text-foreground">
+                <SheetTitle className="font-display font-bold text-foreground">
                   Voice Note
-                </DialogTitle>
+                </SheetTitle>
               </div>
-            </DialogHeader>
+            </SheetHeader>
             <div className="flex flex-col gap-3 py-1">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="voice-to" className="text-sm font-medium">
@@ -827,7 +939,7 @@ function NewNoteDialog({
                 )}
               </div>
             </div>
-            <DialogFooter className="gap-2">
+            <div className="flex gap-2 justify-end mt-2">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.voice.cancel_button"
@@ -844,13 +956,13 @@ function NewNoteDialog({
                   Stop & Send
                 </Button>
               )}
-            </DialogFooter>
+            </div>
           </>
         )}
 
         {step === "video" && (
           <>
-            <DialogHeader>
+            <SheetHeader>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -863,11 +975,11 @@ function NewNoteDialog({
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <DialogTitle className="font-display font-bold text-foreground">
+                <SheetTitle className="font-display font-bold text-foreground">
                   Video Note
-                </DialogTitle>
+                </SheetTitle>
               </div>
-            </DialogHeader>
+            </SheetHeader>
             <div className="flex flex-col gap-3 py-1">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="video-to" className="text-sm font-medium">
@@ -951,7 +1063,7 @@ function NewNoteDialog({
                 )}
               </div>
             </div>
-            <DialogFooter className="gap-2">
+            <div className="flex gap-2 justify-end mt-2">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.video.cancel_button"
@@ -968,11 +1080,11 @@ function NewNoteDialog({
                   Stop & Send
                 </Button>
               )}
-            </DialogFooter>
+            </div>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -982,6 +1094,7 @@ export default function ChatsTab() {
     (typeof SAMPLE_CHATS)[0] | null
   >(null);
   const [newMessageOpen, setNewMessageOpen] = useState(false);
+  const [contactsSheetOpen, setContactsSheetOpen] = useState(false);
 
   const chats =
     backendChats && backendChats.length > 0
@@ -993,7 +1106,7 @@ export default function ChatsTab() {
       : SAMPLE_CHATS;
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden">
+    <div className="flex flex-col h-full relative">
       {/* Chat list */}
       <div className="flex flex-col h-full">
         <div className="px-4 py-3 border-b border-border">
@@ -1008,12 +1121,35 @@ export default function ChatsTab() {
             </div>
             <button
               type="button"
+              data-ocid="chats.contacts_button"
+              onClick={() => setContactsSheetOpen(true)}
+              className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shadow-sm hover:bg-accent active:scale-95 transition-all flex-shrink-0 border border-border"
+            >
+              <Users className="w-4 h-4 text-foreground" />
+            </button>
+            <button
+              type="button"
               data-ocid="chats.new_message.open_modal_button"
               onClick={() => setNewMessageOpen(true)}
               className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all flex-shrink-0"
             >
               <Plus className="w-5 h-5 text-primary-foreground" />
             </button>
+          </div>
+        </div>
+
+        {/* Add Chat row - Feels style */}
+        <div className="flex gap-3 overflow-x-auto px-4 py-3 scrollbar-hide border-b border-border/50">
+          <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+            <button
+              type="button"
+              data-ocid="chats.add.button"
+              onClick={() => setNewMessageOpen(true)}
+              className="w-14 h-14 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors"
+            >
+              <Plus className="w-6 h-6 text-primary" />
+            </button>
+            <span className="text-[10px] text-muted-foreground">New Chat</span>
           </div>
         </div>
 
@@ -1063,24 +1199,69 @@ export default function ChatsTab() {
         )}
       </AnimatePresence>
 
-      {/* FAB - New Note */}
-      {!selectedChat && (
-        <button
-          type="button"
-          data-ocid="chats.open_modal_button"
-          onClick={() => setNewMessageOpen(true)}
-          className="absolute bottom-4 right-4 w-14 h-14 rounded-full phoenix-gradient shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-all z-10"
-          aria-label="New message"
-        >
-          <Plus className="w-6 h-6 text-primary-foreground" />
-        </button>
-      )}
-
       {/* New Note Dialog */}
       <NewNoteDialog
         open={newMessageOpen}
         onClose={() => setNewMessageOpen(false)}
       />
+
+      {/* Contacts Sheet */}
+      <Sheet open={contactsSheetOpen} onOpenChange={setContactsSheetOpen}>
+        <SheetContent
+          side="right"
+          data-ocid="chats.contacts_sheet"
+          className="w-full sm:max-w-sm p-0 flex flex-col"
+        >
+          <SheetHeader className="px-4 py-4 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg phoenix-gradient flex items-center justify-center">
+                <Users className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <SheetTitle className="font-display font-bold text-foreground">
+                Contacts
+              </SheetTitle>
+            </div>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
+            {SAMPLE_CONTACTS.map((contact, idx) => (
+              <motion.div
+                key={contact.id}
+                data-ocid={`chats.contact.item.${idx + 1}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-border hover:bg-accent/40 transition-colors"
+              >
+                <div
+                  className={`w-11 h-11 rounded-full ${contact.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm`}
+                >
+                  {contact.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-semibold text-foreground text-sm">
+                    {contact.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                    {contact.phonexId}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  data-ocid={`chats.contact.select_button.${idx + 1}`}
+                  onClick={() => {
+                    setContactsSheetOpen(false);
+                    setNewMessageOpen(true);
+                  }}
+                  className="phoenix-gradient text-primary-foreground border-0 hover:opacity-90 text-xs px-3 h-8 flex-shrink-0"
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  Message
+                </Button>
+              </motion.div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

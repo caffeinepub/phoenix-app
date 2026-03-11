@@ -1,28 +1,22 @@
-# Phoenix App
+# Phonex App
 
 ## Current State
-The app has 4 tabs: Chats, Calls, Email, Pocket. The Calls tab was formerly "Class" and there are unused JobsTab and ClassTab files.
+- PocketTab.tsx: full wallet UI with send/receive/topup flows, secret key, transaction history
+- ChatsTab.tsx: chat list with sample contacts, message composer (text/voice/video), but no contact list for recipient selection
 
 ## Requested Changes (Diff)
 
 ### Add
-- New **Feels** tab (replacing Calls/Class)
-- Feels works like WhatsApp Status / Facebook Reels: short 30-second moments
-- Max 5 Feels active at once
-- 5 feel categories: Happy, Sad, Travel, Work/Busy, Shopping
-- Each Feel shows as a story-card with category icon/label, 30s timer/duration indicator
-- User can add a new Feel (pick category, optionally add a text or emoji note)
-- Feels expire after 30 seconds of "view" time (simulated, not real-time)
-- UI shows existing feels as story bubbles at top, with category filters below
-- Add Feel button opens a sheet to pick category + write a short caption
-- If 5 feels already exist, the Add button is disabled with a message
+- **PIN Lock for Pocket tab**: A 4-digit PIN gate that appears when the user navigates to the Pocket tab. First visit prompts PIN setup (set + confirm). Subsequent visits prompt PIN entry. PIN is stored in localStorage. Wrong PIN shows error. Correct PIN unlocks and shows wallet for the session. Option to change PIN in a settings area within the tab.
+- **Contact List in Chats**: A contacts panel/sheet accessible from ChatsTab. Shows a list of known contacts (sample + any stored). User can tap a contact to start a chat. When composing a new message, recipient field has a "Choose from contacts" button that opens the contact picker sheet. Contacts shown with avatar/initials, name, and Phonex ID.
 
 ### Modify
-- HomeScreen: remove Calls tab, add Feels tab (tabs become: Chats, Feels, Email, Pocket)
+- PocketTab: wrap existing content behind PIN lock screen. On first load check localStorage for saved PIN; if none, show setup flow; if exists, show entry flow.
+- ChatsTab: add contacts list accessible via a button, and wire contact picker into new message compose flow.
 
 ### Remove
-- Calls tab from navigation and tab content
+- Nothing removed.
 
 ## Implementation Plan
-1. Create `src/frontend/src/tabs/FeelsTab.tsx` with story-bubble UI, category pills, add-feel sheet
-2. Update `src/frontend/src/screens/HomeScreen.tsx` to replace Calls with Feels
+1. PocketTab: add `pinUnlocked` state, `savedPin` from localStorage, PIN setup/entry UI (4-digit input using OTP-style boxes), unlock logic, change PIN option
+2. ChatsTab: add SAMPLE_CONTACTS array with name/initials/phonexId, add ContactsSheet component, add "Contacts" button in header, wire contact picker into Text Note compose recipient field

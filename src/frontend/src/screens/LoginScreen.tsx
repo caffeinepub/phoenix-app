@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Mail, Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
-import phonexLogo from "../assets/Phonex.jpg";
+const phonexLogo = "/assets/uploads/Phonex-Icon-1.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 

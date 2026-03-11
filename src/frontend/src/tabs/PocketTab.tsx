@@ -25,7 +25,9 @@ import {
   Download,
   Eye,
   EyeOff,
+  KeyRound,
   Loader2,
+  Lock,
   Plus,
   QrCode,
   Receipt,
@@ -35,7 +37,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 function generatePaymentId(): string {
@@ -943,11 +945,209 @@ function ReceiveModal({ open, onClose, paymentId }: ReceiveModalProps) {
   );
 }
 
+// ── PIN Lock ──────────────────────────────────────────────────────────────────
+type PinMode = "locked" | "setup-enter" | "setup-confirm" | "change-verify";
+
+function PinLockScreen({
+  mode,
+  onUnlock,
+  onSetupComplete,
+  onChangePinVerified,
+}: {
+  mode: "locked" | "setup-enter" | "setup-confirm" | "change-verify";
+  onUnlock: () => void;
+  onSetupComplete: (pin: string) => void;
+  onChangePinVerified: () => void;
+}) {
+  const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
+  const [setupFirst, setSetupFirst] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [shake, setShake] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  function triggerShake(msg: string) {
+    setError(msg);
+    setShake(true);
+    setDigits(["", "", "", ""]);
+    setTimeout(() => {
+      setShake(false);
+      inputRefs.current[0]?.focus();
+    }, 600);
+  }
+
+  function handleDigit(idx: number, val: string) {
+    const d = val.replace(/\D/g, "").slice(-1);
+    const next = [...digits];
+    next[idx] = d;
+    setDigits(next);
+    setError("");
+    if (d && idx < 3) {
+      inputRefs.current[idx + 1]?.focus();
+    }
+    if (idx === 3 && d) {
+      const pin = [...next.slice(0, 3), d].join("");
+      handleSubmit(pin);
+    }
+  }
+
+  function handleKeyDown(idx: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !digits[idx] && idx > 0) {
+      inputRefs.current[idx - 1]?.focus();
+    }
+  }
+
+  function handleSubmit(pin: string) {
+    if (pin.length < 4) return;
+    const saved = localStorage.getItem("phonex_pocket_pin");
+
+    if (mode === "locked") {
+      if (pin === saved) {
+        onUnlock();
+      } else {
+        triggerShake("Incorrect PIN. Try again.");
+      }
+    } else if (mode === "setup-enter") {
+      setSetupFirst(pin);
+      setDigits(["", "", "", ""]);
+      setTimeout(() => inputRefs.current[0]?.focus(), 50);
+      // Switch to confirm step handled externally via callback
+      onSetupComplete(pin);
+    } else if (mode === "setup-confirm") {
+      if (pin === setupFirst) {
+        localStorage.setItem("phonex_pocket_pin", pin);
+        onUnlock();
+      } else {
+        triggerShake("PINs don't match. Try again.");
+      }
+    } else if (mode === "change-verify") {
+      if (pin === saved) {
+        onChangePinVerified();
+      } else {
+        triggerShake("Incorrect current PIN.");
+      }
+    }
+  }
+
+  const titles: Record<PinMode, string> = {
+    locked: "Enter PIN",
+    "setup-enter": "Create PIN",
+    "setup-confirm": "Confirm PIN",
+    "change-verify": "Current PIN",
+  };
+  const subtitles: Record<PinMode, string> = {
+    locked: "Enter your 4-digit PIN to access Pocket",
+    "setup-enter": "Choose a 4-digit PIN to secure your wallet",
+    "setup-confirm": "Re-enter your PIN to confirm",
+    "change-verify": "Enter your current PIN to change it",
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-full px-6 py-10 gap-6">
+      <motion.div
+        animate={shake ? { x: [-8, 8, -6, 6, -4, 4, 0] } : {}}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center gap-5 w-full max-w-[280px]"
+      >
+        {/* Lock icon */}
+        <div className="w-16 h-16 rounded-2xl phoenix-gradient flex items-center justify-center shadow-lg">
+          <Lock className="w-8 h-8 text-primary-foreground" />
+        </div>
+
+        <div className="text-center">
+          <h2 className="font-display font-bold text-xl text-foreground">
+            {titles[mode]}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {subtitles[mode]}
+          </p>
+        </div>
+
+        {/* PIN boxes */}
+        <div className="flex gap-3" data-ocid="pocket.pin_input">
+          {digits.map((d, i) => (
+            <input
+              // biome-ignore lint/suspicious/noArrayIndexKey: positional
+              key={i}
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={d}
+              onChange={(e) => handleDigit(i, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(i, e)}
+              className={`w-12 h-14 text-center text-2xl font-black border-2 rounded-xl bg-card focus:outline-none transition-all font-mono ${
+                d
+                  ? "border-primary text-foreground"
+                  : "border-border text-foreground"
+              } ${error ? "border-destructive" : ""} focus:border-primary`}
+            />
+          ))}
+        </div>
+
+        {error && (
+          <p className="text-destructive text-sm font-medium text-center">
+            {error}
+          </p>
+        )}
+
+        <Button
+          data-ocid="pocket.pin_submit_button"
+          onClick={() => handleSubmit(digits.join(""))}
+          disabled={digits.some((d) => !d)}
+          className="w-full phoenix-gradient text-primary-foreground border-0 hover:opacity-90 font-bold"
+        >
+          <KeyRound className="w-4 h-4 mr-2" />
+          {mode === "locked"
+            ? "Unlock Wallet"
+            : mode === "change-verify"
+              ? "Verify"
+              : "Confirm"}
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
+
 // ── PocketTab ─────────────────────────────────────────────────────────────────
 export default function PocketTab() {
   const paymentId = useMemo(() => generatePaymentId(), []);
   const pocketKey = useMemo(() => generatePocketKey(), []);
   const [keyVisible, setKeyVisible] = useState(false);
+  // PIN lock state
+  const [pinUnlocked, setPinUnlocked] = useState(false);
+  const [pinMode, setPinMode] = useState<
+    "locked" | "setup-enter" | "setup-confirm" | "change-verify"
+  >("locked");
+  const [_setupFirstPin, setSetupFirstPin] = useState("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("phonex_pocket_pin");
+    if (!saved) {
+      setPinMode("setup-enter");
+    } else {
+      setPinMode("locked");
+    }
+  }, []);
+
+  const handlePinUnlock = useCallback(() => {
+    setPinUnlocked(true);
+  }, []);
+
+  const handleSetupComplete = useCallback((pin: string) => {
+    const saved = localStorage.getItem("phonex_pocket_pin");
+    if (!saved) {
+      // First time setup - store first entry, move to confirm
+      setSetupFirstPin(pin);
+      setPinMode("setup-confirm");
+    }
+  }, []);
+
+  const handleChangePinVerified = useCallback(() => {
+    setSetupFirstPin("");
+    setPinMode("setup-enter");
+  }, []);
   const [transactions, setTransactions] =
     useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [sendOpen, setSendOpen] = useState(false);
@@ -1045,6 +1245,17 @@ export default function PocketTab() {
     );
   }
 
+  if (!pinUnlocked) {
+    return (
+      <PinLockScreen
+        mode={pinMode}
+        onUnlock={handlePinUnlock}
+        onSetupComplete={handleSetupComplete}
+        onChangePinVerified={handleChangePinVerified}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-0 pb-6">
       {/* Balance card */}
@@ -1080,6 +1291,18 @@ export default function PocketTab() {
                   KEY: ****
                 </>
               )}
+            </button>
+            <button
+              type="button"
+              data-ocid="pocket.change_pin_button"
+              onClick={() => {
+                setPinMode("change-verify");
+                setPinUnlocked(false);
+              }}
+              className="flex items-center gap-1 bg-white/15 text-white border-0 text-[10px] rounded-full px-2 py-0.5 hover:bg-white/25 transition-colors"
+            >
+              <Lock className="w-3 h-3" />
+              Change PIN
             </button>
           </div>
         </div>
