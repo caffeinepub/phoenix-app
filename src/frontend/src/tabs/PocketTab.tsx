@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { PAKISTAN_BANKS, PAKISTAN_OPERATORS } from "@/data/pakistan";
+import {
+  addTransaction as dbAddTransaction,
+  getBalance,
+  getTransactions,
+  setBalance,
+} from "@/services/PhonexDB";
 import {
   ArrowRight,
   Building2,
@@ -42,14 +49,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-function generatePaymentId(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "PXP-";
-  for (let i = 0; i < 8; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
-}
 
 function generatePocketKey(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -109,7 +108,7 @@ const QR_CELLS: { id: string; filled: boolean }[] = [
   { id: "qrc-25", filled: true },
 ];
 
-const MOBILE_OPERATORS = ["Jazz", "Ufone", "Telenor", "Zong", "Warid"];
+// PAKISTAN_OPERATORS imported from @/data/pakistan
 
 // ── types ─────────────────────────────────────────────────────────────────────
 type Channel = "phonex" | "external" | "topup";
@@ -486,9 +485,9 @@ function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
                     <SelectValue placeholder="Select operator" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MOBILE_OPERATORS.map((op) => (
-                      <SelectItem key={op} value={op}>
-                        {op}
+                    {PAKISTAN_OPERATORS.map((op) => (
+                      <SelectItem key={op.name} value={op.name}>
+                        {op.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -768,12 +767,18 @@ function SendModal({ open, onClose, onSuccess }: SendModalProps) {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-semibold">Bank Name</Label>
-                    <Input
-                      data-ocid="send.bank.input"
-                      placeholder="Bank name"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                    />
+                    <Select value={bankName} onValueChange={setBankName}>
+                      <SelectTrigger data-ocid="send.bank.select">
+                        <SelectValue placeholder="Select bank" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PAKISTAN_BANKS.map((bank) => (
+                          <SelectItem key={bank} value={bank}>
+                            {bank}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
                     <Label className="font-semibold">
@@ -1315,7 +1320,8 @@ function PinLockScreen({
 
 // ── PocketTab ─────────────────────────────────────────────────────────────────
 export default function PocketTab() {
-  const paymentId = useMemo(() => generatePaymentId(), []);
+  const { currentUser } = useAuth();
+  const paymentId = currentUser?.paymentId ?? "PXP-XXXXXXXX";
   const pocketKey = useMemo(() => generatePocketKey(), []);
   const [keyVisible, setKeyVisible] = useState(false);
   // PIN lock state
@@ -1377,8 +1383,39 @@ export default function PocketTab() {
     setSetupFirstPin("");
     setPinMode("setup-enter");
   }, []);
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (!currentUser?.paymentId) return INITIAL_TRANSACTIONS;
+    const dbTxs = getTransactions(currentUser.paymentId);
+    if (dbTxs.length > 0) {
+      return dbTxs.map((t) => ({
+        id: t.id,
+        senderName:
+          t.senderPaymentId === currentUser.paymentId
+            ? "You"
+            : t.receiverDisplay,
+        receiverName: t.receiverDisplay,
+        amount:
+          t.amount < 0
+            ? `-Rs.${Math.abs(t.amount).toLocaleString()}`
+            : `+Rs.${t.amount.toLocaleString()}`,
+        amountNum: Math.abs(t.amount),
+        date: new Date(t.timestamp).toLocaleString("en-PK", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        type: (t.senderPaymentId === currentUser.paymentId
+          ? "debit"
+          : "credit") as TxType,
+        category: t.channel === "TOPUP" ? "TopUp" : "Transfer",
+        channel: t.channel.toLowerCase() as Channel,
+        bankName: t.bankName,
+        lastDigits: t.ibanDigits,
+      }));
+    }
+    return INITIAL_TRANSACTIONS;
+  });
   const [sendOpen, setSendOpen] = useState(false);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
@@ -1387,13 +1424,16 @@ export default function PocketTab() {
   const [receiptOpen, setReceiptOpen] = useState(false);
 
   const balance = useMemo(() => {
-    let total = 95000;
-    for (const tx of transactions) {
-      if (tx.type === "credit") total += tx.amountNum;
-      else total -= tx.amountNum;
+    if (!currentUser?.paymentId) {
+      let total = 95000;
+      for (const tx of transactions) {
+        if (tx.type === "credit") total += tx.amountNum;
+        else total -= tx.amountNum;
+      }
+      return total;
     }
-    return total;
-  }, [transactions]);
+    return getBalance(currentUser.paymentId);
+  }, [transactions, currentUser?.paymentId]);
 
   function handleCopyId() {
     navigator.clipboard.writeText(paymentId).catch(() => {});
@@ -1403,10 +1443,40 @@ export default function PocketTab() {
 
   function handleSendSuccess(tx: Transaction) {
     setTransactions((prev) => [tx, ...prev]);
+    if (currentUser?.paymentId) {
+      const newBal = balance - tx.amountNum;
+      setBalance(currentUser.paymentId, newBal);
+      dbAddTransaction({
+        id: tx.id,
+        senderPaymentId: currentUser.paymentId,
+        receiverPaymentId: tx.receiverName,
+        receiverDisplay: tx.receiverName,
+        amount: -tx.amountNum,
+        channel: tx.channel === "phonex" ? "PHONEX" : "EXTERNAL",
+        timestamp: Date.now(),
+        bankName: tx.bankName,
+        ibanDigits: tx.lastDigits,
+      });
+    }
   }
 
   function handleTopUpSuccess(tx: Transaction) {
     setTransactions((prev) => [tx, ...prev]);
+    if (currentUser?.paymentId) {
+      const newBal = balance - tx.amountNum;
+      setBalance(currentUser.paymentId, newBal);
+      dbAddTransaction({
+        id: tx.id,
+        senderPaymentId: currentUser.paymentId,
+        receiverPaymentId: tx.receiverName,
+        receiverDisplay: tx.receiverName,
+        amount: -tx.amountNum,
+        channel: "TOPUP",
+        timestamp: Date.now(),
+        operatorName: tx.receiverName.split(" ")[0],
+        mobileNumber: tx.receiverName,
+      });
+    }
   }
 
   function openReceipt(tx: Transaction) {

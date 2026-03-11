@@ -18,19 +18,21 @@ import {
   ArrowLeft,
   Building2,
   Check,
+  Copy,
   CreditCard,
-  Edit3,
   Globe,
   LogOut,
   Mail,
+  Moon,
   Phone,
   Settings,
+  Sun,
   Trash2,
-  X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Props {
   onBack: () => void;
@@ -39,6 +41,7 @@ interface Props {
 
 export default function ProfileScreen({ onBack, onLogout }: Props) {
   const { currentUser, updateProfile, logout, deleteAccount } = useAuth();
+  const { isDark, darkNameColor, setDarkNameColor } = useTheme();
   const [editing, setEditing] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
     currentUser?.avatarUrl ?? null,
@@ -46,10 +49,11 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
   const [form, setForm] = useState({
     displayName: currentUser?.displayName || "",
     phone: currentUser?.phone || "",
-    countryCode: currentUser?.countryCode || "+1",
+    countryCode: currentUser?.countryCode || "+92",
     bankName: currentUser?.bankName || "",
     ibanNumber: currentUser?.ibanNumber || "",
   });
+  const [copied, setCopied] = useState(false);
 
   const initials = currentUser?.displayName
     ? currentUser.displayName.slice(0, 2).toUpperCase()
@@ -64,7 +68,7 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
     setForm({
       displayName: currentUser?.displayName || "",
       phone: currentUser?.phone || "",
-      countryCode: currentUser?.countryCode || "+1",
+      countryCode: currentUser?.countryCode || "+92",
       bankName: currentUser?.bankName || "",
       ibanNumber: currentUser?.ibanNumber || "",
     });
@@ -82,11 +86,18 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
     onLogout();
   };
 
+  const handleCopyId = () => {
+    if (currentUser?.paymentId) {
+      navigator.clipboard.writeText(currentUser.paymentId).catch(() => {});
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="phoenix-gradient px-4 pb-12">
         <div className="flex items-center justify-between pt-4 mb-2">
-          {/* Back button - always visible */}
           <button
             type="button"
             data-ocid="profile.button"
@@ -106,7 +117,7 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
               onClick={() => setEditing(true)}
               className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors"
             >
-              <Edit3 className="w-4 h-4 text-white" />
+              <Settings className="w-4 h-4 text-white" />
             </button>
           ) : (
             <div className="flex gap-1">
@@ -124,42 +135,70 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
                 onClick={handleCancel}
                 className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-red-400/40 transition-colors"
               >
-                <X className="w-4 h-4 text-white" />
+                <ArrowLeft className="w-4 h-4 text-white" />
               </button>
             </div>
           )}
         </div>
-      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex-1 bg-background rounded-t-3xl -mt-8 px-6 pt-6 pb-10"
-      >
-        {/* Avatar section */}
-        <div className="flex flex-col items-center mb-6">
+        {/* Avatar */}
+        <div className="flex flex-col items-center gap-2 pb-6 pt-4">
           {editing ? (
             <AvatarPicker value={avatarUrl} onChange={setAvatarUrl} />
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <Avatar className="w-20 h-20 border-4 border-primary/20">
-                <AvatarImage src={avatarUrl ?? currentUser?.avatarUrl} />
-                <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <p className="font-display text-xl font-bold text-foreground">
-                {currentUser?.displayName || "Your Name"}
+            <Avatar className="w-20 h-20 ring-2 ring-white/50">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar" />}
+              <AvatarFallback className="phoenix-gradient text-primary-foreground font-display font-bold text-2xl">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          )}
+          <p className="font-display text-xl font-bold text-primary-foreground">
+            {currentUser?.displayName || "Your Name"}
+          </p>
+          <p className="text-sm text-primary-foreground/70">
+            {currentUser?.email}
+          </p>
+        </div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex-1 -mt-6 bg-background rounded-t-3xl px-4 pt-6 pb-10 shadow-sm"
+      >
+        <div className="space-y-4">
+          {/* Payment ID */}
+          {currentUser?.paymentId && (
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-1">
+              <p className="text-xs font-semibold text-primary uppercase tracking-widest flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5" />
+                Your Payment ID
               </p>
-              <p className="text-sm text-muted-foreground">
-                {currentUser?.email}
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-mono font-bold text-foreground tracking-wider text-sm">
+                  {currentUser.paymentId}
+                </p>
+                <button
+                  type="button"
+                  data-ocid="profile.copy.button"
+                  onClick={handleCopyId}
+                  className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors flex-shrink-0"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-primary" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Share this ID to receive payments
               </p>
             </div>
           )}
-        </div>
 
-        <div className="space-y-4">
           {/* Display Name */}
           <div className="space-y-1.5">
             <Label className="text-foreground font-semibold">Full Name</Label>
@@ -254,8 +293,8 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-foreground font-semibold">
-                Account / IBAN Number
+              <Label className="text-foreground font-semibold flex items-center gap-1">
+                <CreditCard className="w-3 h-3" /> Account / IBAN
               </Label>
               {editing ? (
                 <div className="relative">
@@ -278,6 +317,43 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </div>
           </div>
 
+          {/* Dark Mode App Name Color */}
+          {isDark && (
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Moon className="w-4 h-4 text-primary" />
+                Dark Mode — App Name Color
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  data-ocid="profile.name_white.toggle"
+                  onClick={() => setDarkNameColor("white")}
+                  className={`flex-1 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    darkNameColor === "white"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-border/60"
+                  }`}
+                >
+                  <Sun className="w-4 h-4 inline mr-1.5" />
+                  White
+                </button>
+                <button
+                  type="button"
+                  data-ocid="profile.name_maroon.toggle"
+                  onClick={() => setDarkNameColor("maroon")}
+                  className={`flex-1 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    darkNameColor === "maroon"
+                      ? "border-[#800000] bg-[#800000]/10 text-[#800000]"
+                      : "border-border text-muted-foreground hover:border-border/60"
+                  }`}
+                >
+                  <span style={{ color: "#800000" }}>●</span> Maroon
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Account Settings */}
           <div className="border-t border-border pt-4 space-y-3">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -285,7 +361,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
               Account Settings
             </p>
 
-            {/* Logout */}
             <Button
               type="button"
               data-ocid="profile.logout.button"
@@ -297,7 +372,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
               Log Out
             </Button>
 
-            {/* Delete Account */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button

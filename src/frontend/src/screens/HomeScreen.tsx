@@ -38,7 +38,7 @@ type TabId = (typeof TABS)[number]["id"];
 export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("chats");
   const { currentUser } = useAuth();
-  const { toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark, darkNameColor } = useTheme();
 
   const tabContent: Record<TabId, React.ReactNode> = {
     chats: <ChatsTab />,
@@ -61,7 +61,11 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
             <h1
               className="font-display text-xl font-black tracking-tight"
               style={{
-                color: "#0f2d6b",
+                color: isDark
+                  ? darkNameColor === "maroon"
+                    ? "#800000"
+                    : "#ffffff"
+                  : "#0f2d6b",
                 textShadow: "0 1px 3px rgba(255,255,255,0.6)",
               }}
             >

@@ -17,6 +17,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+import { sendMessage as dbSendMessage, getContacts } from "@/services/PhonexDB";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -1089,7 +1091,22 @@ function NewNoteDialog({
 }
 
 export default function ChatsTab() {
+  const { currentUser } = useAuth();
   const { data: backendChats } = useGetChats();
+  const dbContacts = currentUser?.paymentId
+    ? getContacts(currentUser.paymentId)
+    : [];
+  const dynamicContacts =
+    dbContacts.length > 0
+      ? dbContacts.map((c, i) => ({
+          id: c.id,
+          name: c.name,
+          initials: c.name.slice(0, 2).toUpperCase(),
+          color:
+            SAMPLE_CONTACTS[i % SAMPLE_CONTACTS.length]?.color ?? "bg-primary",
+          phonexId: c.phonexId,
+        }))
+      : SAMPLE_CONTACTS;
   const [selectedChat, setSelectedChat] = useState<
     (typeof SAMPLE_CHATS)[0] | null
   >(null);
@@ -1223,7 +1240,7 @@ export default function ChatsTab() {
             </div>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
-            {SAMPLE_CONTACTS.map((contact, idx) => (
+            {dynamicContacts.map((contact, idx) => (
               <motion.div
                 key={contact.id}
                 data-ocid={`chats.contact.item.${idx + 1}`}

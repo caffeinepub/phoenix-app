@@ -7,6 +7,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  addFeel as dbAddFeel,
+  deleteMyFeel,
+  getActiveFeels,
+} from "@/services/PhonexDB";
 import { ImageIcon, Plus, Sparkles, Video, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -252,20 +258,35 @@ function FeelViewer({ feel, onClose }: FeelViewerProps) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function FeelsTab() {
-  const [feels, setFeels] = useState<Feel[]>([
-    {
-      id: "seed-1",
-      category: "happy",
-      caption: "Enjoying the day! ☀️",
-      createdAt: Date.now() - 1 * 60 * 60 * 1000,
-    },
-    {
-      id: "seed-2",
-      category: "travel",
-      caption: "On my way to Lahore ✈️",
-      createdAt: Date.now() - 3 * 60 * 60 * 1000,
-    },
-  ]);
+  const { currentUser } = useAuth();
+  const [feels, setFeels] = useState<Feel[]>(() => {
+    const dbFeels = getActiveFeels();
+    if (dbFeels.length > 0) {
+      return dbFeels.map((f) => ({
+        id: f.id,
+        category: (f.mood || "happy") as Category,
+        caption: f.caption,
+        createdAt: f.createdAt,
+        mediaUrl: f.mediaUrl || undefined,
+        mediaType:
+          f.mediaType === "photo" ? ("image" as const) : ("video" as const),
+      }));
+    }
+    return [
+      {
+        id: "seed-1",
+        category: "happy" as Category,
+        caption: "Enjoying the day! ☀️",
+        createdAt: Date.now() - 1 * 60 * 60 * 1000,
+      },
+      {
+        id: "seed-2",
+        category: "travel" as Category,
+        caption: "On my way to Lahore ✈️",
+        createdAt: Date.now() - 3 * 60 * 60 * 1000,
+      },
+    ];
+  });
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedCat, setSelectedCat] = useState<Category>("happy");
   const [caption, setCaption] = useState("");
@@ -298,6 +319,19 @@ export default function FeelsTab() {
       mediaType,
     };
     setFeels((prev) => [newFeel, ...prev]);
+    if (currentUser?.paymentId) {
+      dbAddFeel({
+        id: newFeel.id,
+        creatorPaymentId: currentUser.paymentId,
+        creatorName: currentUser.displayName || currentUser.email,
+        mediaUrl: newFeel.mediaUrl || "",
+        mediaType: newFeel.mediaType === "video" ? "video" : "photo",
+        mood: newFeel.category,
+        caption: newFeel.caption,
+        createdAt: newFeel.createdAt,
+        expiresAt: newFeel.createdAt + EXPIRE_MS,
+      });
+    }
     setCaption("");
     setMediaUrl(undefined);
     setMediaType(undefined);

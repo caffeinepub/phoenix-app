@@ -1,22 +1,36 @@
 # Phonex App
 
 ## Current State
-- PocketTab.tsx: full wallet UI with send/receive/topup flows, secret key, transaction history
-- ChatsTab.tsx: chat list with sample contacts, message composer (text/voice/video), but no contact list for recipient selection
+Phonex is a React/TypeScript frontend on ICP with a Motoko backend. The backend currently stores basic user profiles, chats, class groups, and job listings. The frontend has all 5 tabs (Chats, Feels, Email, Pocket, Calls) with UI flows implemented, but backend data integration for transactions, feels, emails, contacts, and full user accounts (with password, payment ID, bank details, PIN) is incomplete. Pakistan bank/operator lists are not yet in the app.
 
 ## Requested Changes (Diff)
 
 ### Add
-- **PIN Lock for Pocket tab**: A 4-digit PIN gate that appears when the user navigates to the Pocket tab. First visit prompts PIN setup (set + confirm). Subsequent visits prompt PIN entry. PIN is stored in localStorage. Wrong PIN shows error. Correct PIN unlocks and shows wallet for the session. Option to change PIN in a settings area within the tab.
-- **Contact List in Chats**: A contacts panel/sheet accessible from ChatsTab. Shows a list of known contacts (sample + any stored). User can tap a contact to start a chat. When composing a new message, recipient field has a "Choose from contacts" button that opens the contact picker sheet. Contacts shown with avatar/initials, name, and Phonex ID.
+- Full user account model: username, passwordHash, email, phone, bankName, bankAccount, paymentId (PXP-XXXXXXXX), pocketPin, avatarUrl, displayName
+- Transactions storage: id, senderId, receiverId, amount (PKR), channel (PHONEX/EXTERNAL/TOPUP), type, timestamp, status, receiptData (bankName, ibanLast3, operatorName, mobileNumber)
+- Feels storage: id, userId, mediaUrl, mediaType (photo/video), mood, caption, createdAt, expiresAt (12h auto-expiry)
+- Email storage: id, fromUserId, toAddress, ccAddresses, bccAddresses, subject, body, attachmentNames, timestamp, isRead
+- Contacts storage per user: id, name, phonexId, email, phone
+- Static Pakistan banks list (20+ major banks)
+- Static Pakistan mobile operators list (Jazz, Telenor, Zong, Ufone, Warid)
+- Backend functions: register, login (by phonexId or email + password), getMyAccount, updateAccount, addTransaction, getMyTransactions, addFeel, getActiveFeels, addEmail, getMyEmails, addContact, getMyContacts, deleteContact, verifyPaymentId (lookup user by paymentId)
 
 ### Modify
-- PocketTab: wrap existing content behind PIN lock screen. On first load check localStorage for saved PIN; if none, show setup flow; if exists, show entry flow.
-- ChatsTab: add contacts list accessible via a button, and wire contact picker into new message compose flow.
+- User authentication flow: register saves full account; login returns full user data
+- Pocket tab: use real Pakistan banks/operators from static lists; wire send/receive/topup to backend transactions
+- Chats tab: wire contacts to backend
+- Calls tab: add contacts panel using backend contacts
+- Emails tab: add contacts panel using backend contacts
+- App name in dark mode: add maroon as an option alongside white
 
 ### Remove
-- Nothing removed.
+- ClassGroup and JobListing backend data (no longer needed)
 
 ## Implementation Plan
-1. PocketTab: add `pinUnlocked` state, `savedPin` from localStorage, PIN setup/entry UI (4-digit input using OTP-style boxes), unlock logic, change PIN option
-2. ChatsTab: add SAMPLE_CONTACTS array with name/initials/phonexId, add ContactsSheet component, add "Contacts" button in header, wire contact picker into Text Note compose recipient field
+1. Regenerate backend with full Phonex data models and all required functions
+2. Update AuthContext to call backend register/login and persist full user state
+3. Update PocketTab to use Pakistan banks/operators lists and wire transactions to backend
+4. Update ChatsTab, CallsTab, EmailTab to use backend contacts
+5. Update FeelsTab to load/save feels from backend
+6. Update EmailTab to load/save emails from backend
+7. Add maroon dark mode option for app name

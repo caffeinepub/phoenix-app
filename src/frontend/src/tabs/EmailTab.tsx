@@ -15,6 +15,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
+import { sendEmail as dbSendEmail, getContacts } from "@/services/PhonexDB";
 import {
   ChevronDown,
   ChevronUp,
@@ -128,6 +130,7 @@ const SAMPLE_EMAILS = [
 ];
 
 export default function EmailTab() {
+  const { currentUser } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
@@ -147,6 +150,31 @@ export default function EmailTab() {
   const [composeContactsOpen, setComposeContactsOpen] = useState(false);
 
   function handleSend() {
+    if (currentUser?.paymentId) {
+      dbSendEmail({
+        id: `email-${Date.now()}`,
+        fromPaymentId: currentUser.paymentId,
+        fromDisplay: currentUser.displayName || currentUser.email,
+        toAddress: to,
+        ccList: cc
+          ? cc
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        bccList: bcc
+          ? bcc
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
+        subject,
+        body,
+        attachmentNames: attachments.map((a) => a.name),
+        timestamp: Date.now(),
+        isRead: true,
+      });
+    }
     setComposeOpen(false);
     resetForm();
   }

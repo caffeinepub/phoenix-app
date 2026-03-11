@@ -1,6 +1,17 @@
+import {
+  deleteUserAccount,
+  generatePaymentId,
+  getUser,
+  loginUser,
+  registerUser,
+  updateUser,
+} from "@/services/PhonexDB";
+import type { PhonexUser } from "@/services/PhonexDB";
 import { type ReactNode, createContext, useContext, useState } from "react";
 
+// Legacy shape kept for backward compat with existing screens
 export interface UserData {
+  paymentId: string;
   email: string;
   phone: string;
   countryCode: string;
@@ -13,35 +24,20 @@ export interface UserData {
 
 interface AuthContextType {
   currentUser: UserData | null;
-  registeredUsers: UserData[];
   login: (email: string, password: string) => boolean;
-  register: (user: UserData) => void;
+  register: (user: Omit<UserData, "paymentId">) => void;
   logout: () => void;
   deleteAccount: () => void;
   updateProfile: (data: Partial<UserData>) => void;
+  // also expose paymentId helper
+  paymentId: string | null;
 }
 
-const STORAGE_KEY = "phoenix_users";
-const SESSION_KEY = "phoenix_session";
-
-function loadUsers(): UserData[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as UserData[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveUsers(users: UserData[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  } catch {}
-}
+const SESSION_KEY = "phonex_session_v2";
 
 function loadSession(): UserData | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(SESSION_KEY);
     return raw ? (JSON.parse(raw) as UserData) : null;
   } catch {
     return null;
@@ -51,39 +47,62 @@ function loadSession(): UserData | null {
 function saveSession(user: UserData | null) {
   try {
     if (user) {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     } else {
-      sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
     }
   } catch {}
+}
+
+function dbUserToUserData(u: PhonexUser): UserData {
+  return {
+    paymentId: u.paymentId,
+    email: u.email,
+    phone: u.phone,
+    countryCode: "+92",
+    displayName: u.displayName,
+    password: u.password,
+    bankName: u.bankName,
+    ibanNumber: u.bankAccount,
+    avatarUrl: u.avatarUrl,
+  };
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [registeredUsers, setRegisteredUsers] = useState<UserData[]>(loadUsers);
   const [currentUser, setCurrentUser] = useState<UserData | null>(loadSession);
 
   const login = (email: string, password: string): boolean => {
-    const users = loadUsers();
-    const user = users.find(
-      (u) => u.email === email && u.password === password,
-    );
+    const user = loginUser(email, password);
     if (user) {
-      setCurrentUser(user);
-      saveSession(user);
+      const ud = dbUserToUserData(user);
+      setCurrentUser(ud);
+      saveSession(ud);
       return true;
     }
     return false;
   };
 
-  const register = (user: UserData) => {
-    const existing = loadUsers();
-    const updated = [...existing.filter((u) => u.email !== user.email), user];
-    saveUsers(updated);
-    setRegisteredUsers(updated);
-    setCurrentUser(user);
-    saveSession(user);
+  const register = (user: Omit<UserData, "paymentId">) => {
+    const paymentId = generatePaymentId();
+    const dbUser: PhonexUser = {
+      paymentId,
+      username: user.email.split("@")[0],
+      password: user.password,
+      email: user.email,
+      phone: user.phone,
+      displayName: user.displayName || user.email.split("@")[0],
+      bankName: user.bankName || "",
+      bankAccount: user.ibanNumber || "",
+      pocketPin: "",
+      avatarUrl: user.avatarUrl || "",
+      createdAt: Date.now(),
+    };
+    registerUser(dbUser);
+    const ud = dbUserToUserData(dbUser);
+    setCurrentUser(ud);
+    saveSession(ud);
   };
 
   const logout = () => {
@@ -93,10 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = () => {
     if (currentUser) {
-      const users = loadUsers();
-      const updated = users.filter((u) => u.email !== currentUser.email);
-      saveUsers(updated);
-      setRegisteredUsers(updated);
+      deleteUserAccount(currentUser.paymentId);
       setCurrentUser(null);
       saveSession(null);
     }
@@ -105,12 +121,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = (data: Partial<UserData>) => {
     if (currentUser) {
       const updated = { ...currentUser, ...data };
-      const users = loadUsers();
-      const updatedUsers = users.map((u) =>
-        u.email === currentUser.email ? updated : u,
-      );
-      saveUsers(updatedUsers);
-      setRegisteredUsers(updatedUsers);
+      updateUser(currentUser.paymentId, {
+        displayName: updated.displayName,
+        email: updated.email,
+        phone: updated.phone,
+        bankName: updated.bankName,
+        bankAccount: updated.ibanNumber,
+        avatarUrl: updated.avatarUrl,
+      });
       setCurrentUser(updated);
       saveSession(updated);
     }
@@ -120,12 +138,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         currentUser,
-        registeredUsers,
         login,
         register,
         logout,
         deleteAccount,
         updateProfile,
+        paymentId: currentUser?.paymentId ?? null,
       }}
     >
       {children}

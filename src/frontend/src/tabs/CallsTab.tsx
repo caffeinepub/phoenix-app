@@ -15,6 +15,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import { getContacts } from "@/services/PhonexDB";
 import {
   Phone,
   PhoneIncoming,
@@ -431,6 +433,22 @@ function NewCallDialog({
 }
 
 export default function CallsTab() {
+  const { currentUser } = useAuth();
+  const dbContacts = currentUser?.paymentId
+    ? getContacts(currentUser.paymentId)
+    : [];
+  const dynamicContacts =
+    dbContacts.length > 0
+      ? dbContacts.map((c, i) => ({
+          id: c.id,
+          name: c.name,
+          initials: c.name.slice(0, 2).toUpperCase(),
+          color:
+            SAMPLE_CONTACTS[i % SAMPLE_CONTACTS.length]?.color ?? "bg-primary",
+          phonexId: c.phonexId,
+          email: c.email,
+        }))
+      : SAMPLE_CONTACTS;
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
   const [newCallOpen, setNewCallOpen] = useState(false);
   const [newCallKind, setNewCallKind] = useState<CallKind | undefined>(
@@ -620,7 +638,7 @@ export default function CallsTab() {
             </SheetTitle>
           </SheetHeader>
           <div className="flex flex-col gap-2">
-            {SAMPLE_CONTACTS.map((contact, idx) => (
+            {dynamicContacts.map((contact, idx) => (
               <div
                 key={contact.id}
                 data-ocid={`calls.contacts.item.${idx + 1}`}
