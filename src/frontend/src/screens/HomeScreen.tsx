@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import phonexLogo from "/assets/Phonex.jpg";
+import phonexLogo from "../assets/Phonex.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import CallsTab from "../tabs/CallsTab";
