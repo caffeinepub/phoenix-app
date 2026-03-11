@@ -10,11 +10,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Phone,
   PhoneIncoming,
   PhoneMissed,
   PhoneOutgoing,
   Plus,
+  Users,
   Video,
   X,
 } from "lucide-react";
@@ -23,6 +30,57 @@ import { useEffect, useRef, useState } from "react";
 
 type CallType = "incoming" | "outgoing" | "missed";
 type CallKind = "voice" | "video";
+
+const SAMPLE_CONTACTS = [
+  {
+    id: "1",
+    name: "James Okafor",
+    initials: "JO",
+    color: "bg-blue-500",
+    phonexId: "PXP-AB12CD34",
+    email: "james.okafor@phonex.app",
+  },
+  {
+    id: "2",
+    name: "Sara Müller",
+    initials: "SM",
+    color: "bg-rose-500",
+    phonexId: "PXP-EF56GH78",
+    email: "sara.muller@phonex.app",
+  },
+  {
+    id: "3",
+    name: "Liu Wei",
+    initials: "LW",
+    color: "bg-violet-500",
+    phonexId: "PXP-IJ90KL12",
+    email: "liu.wei@phonex.app",
+  },
+  {
+    id: "4",
+    name: "Amina Hassan",
+    initials: "AH",
+    color: "bg-emerald-500",
+    phonexId: "PXP-MN34OP56",
+    email: "amina.hassan@phonex.app",
+  },
+  {
+    id: "5",
+    name: "Carlos Mendez",
+    initials: "CM",
+    color: "bg-orange-500",
+    phonexId: "PXP-QR78ST90",
+    email: "carlos.mendez@phonex.app",
+  },
+  {
+    id: "6",
+    name: "Yuki Tanaka",
+    initials: "YT",
+    color: "bg-teal-500",
+    phonexId: "PXP-UV12WX34",
+    email: "yuki.tanaka@phonex.app",
+  },
+];
 
 const SAMPLE_CALLS: {
   name: string;
@@ -207,6 +265,60 @@ function CallOverlay({ call, onEnd }: { call: ActiveCall; onEnd: () => void }) {
   );
 }
 
+// Contact Picker Dialog (inside NewCallDialog)
+function ContactPickerDialog({
+  open,
+  onClose,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (name: string) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent
+        className="sm:max-w-sm"
+        data-ocid="calls.contact_picker.dialog"
+      >
+        <DialogHeader>
+          <DialogTitle className="font-display text-base">
+            Select Contact
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-1 py-1 max-h-64 overflow-y-auto">
+          {SAMPLE_CONTACTS.map((contact, idx) => (
+            <button
+              key={contact.id}
+              type="button"
+              data-ocid={`calls.contact_picker.item.${idx + 1}`}
+              onClick={() => {
+                onSelect(contact.name);
+                onClose();
+              }}
+              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-accent transition-colors text-left"
+            >
+              <div
+                className={`w-8 h-8 rounded-full ${contact.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}
+              >
+                {contact.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground">
+                  {contact.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {contact.phonexId}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // New Call Dialog
 function NewCallDialog({
   open,
@@ -221,6 +333,7 @@ function NewCallDialog({
 }) {
   const [contactName, setContactName] = useState("");
   const [kind, setKind] = useState<CallKind>(defaultKind ?? "voice");
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   function handleCall() {
     if (!contactName.trim()) return;
@@ -230,74 +343,90 @@ function NewCallDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-sm" data-ocid="calls.dialog">
-        <DialogHeader>
-          <DialogTitle className="font-display text-lg">New Call</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          {/* Call type toggle */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              data-ocid="calls.voice.toggle"
-              onClick={() => setKind("voice")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+    <>
+      <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+        <DialogContent className="sm:max-w-sm" data-ocid="calls.dialog">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg">New Call</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Call type toggle */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                data-ocid="calls.voice.toggle"
+                onClick={() => setKind("voice")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                  kind === "voice"
+                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
+                    : "border-border text-muted-foreground hover:border-emerald-500/40"
+                }`}
+              >
+                <Phone className="w-4 h-4" />
+                Voice Call
+              </button>
+              <button
+                type="button"
+                data-ocid="calls.video.toggle"
+                onClick={() => setKind("video")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                  kind === "video"
+                    ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                    : "border-border text-muted-foreground hover:border-blue-500/40"
+                }`}
+              >
+                <Video className="w-4 h-4" />
+                Video Call
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="font-semibold">Contact Name or Username</Label>
+              <Input
+                data-ocid="calls.contact.input"
+                placeholder="Enter name or username..."
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCall()}
+                autoFocus
+              />
+              <button
+                type="button"
+                data-ocid="calls.contact_picker.open_modal_button"
+                onClick={() => setPickerOpen(true)}
+                className="flex items-center gap-1.5 text-xs text-primary hover:underline mt-0.5"
+              >
+                <Users className="w-3.5 h-3.5" />
+                From Contacts
+              </button>
+            </div>
+
+            <Button
+              data-ocid="calls.call.submit_button"
+              onClick={handleCall}
+              disabled={!contactName.trim()}
+              className={`w-full font-semibold ${
                 kind === "voice"
-                  ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
-                  : "border-border text-muted-foreground hover:border-emerald-500/40"
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
               }`}
             >
-              <Phone className="w-4 h-4" />
-              Voice Call
-            </button>
-            <button
-              type="button"
-              data-ocid="calls.video.toggle"
-              onClick={() => setKind("video")}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
-                kind === "video"
-                  ? "border-blue-500 bg-blue-500/10 text-blue-600"
-                  : "border-border text-muted-foreground hover:border-blue-500/40"
-              }`}
-            >
-              <Video className="w-4 h-4" />
-              Video Call
-            </button>
+              {kind === "voice" ? (
+                <Phone className="mr-2 w-4 h-4" />
+              ) : (
+                <Video className="mr-2 w-4 h-4" />
+              )}
+              Start {kind === "voice" ? "Voice" : "Video"} Call
+            </Button>
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="font-semibold">Contact Name or Username</Label>
-            <Input
-              data-ocid="calls.contact.input"
-              placeholder="Enter name or username..."
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCall()}
-              autoFocus
-            />
-          </div>
-
-          <Button
-            data-ocid="calls.call.submit_button"
-            onClick={handleCall}
-            disabled={!contactName.trim()}
-            className={`w-full font-semibold ${
-              kind === "voice"
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                : "bg-blue-500 hover:bg-blue-600 text-white"
-            }`}
-          >
-            {kind === "voice" ? (
-              <Phone className="mr-2 w-4 h-4" />
-            ) : (
-              <Video className="mr-2 w-4 h-4" />
-            )}
-            Start {kind === "voice" ? "Voice" : "Video"} Call
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      <ContactPickerDialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(name) => setContactName(name)}
+      />
+    </>
   );
 }
 
@@ -307,6 +436,7 @@ export default function CallsTab() {
   const [newCallKind, setNewCallKind] = useState<CallKind | undefined>(
     undefined,
   );
+  const [contactsOpen, setContactsOpen] = useState(false);
 
   function startCall(name: string, avatar: string, kind: CallKind) {
     setActiveCall({ name, avatar: avatar.substring(0, 2).toUpperCase(), kind });
@@ -330,6 +460,15 @@ export default function CallsTab() {
               {SAMPLE_CALLS.length} recent calls
             </p>
           </div>
+          <button
+            type="button"
+            data-ocid="calls.contacts.open_modal_button"
+            onClick={() => setContactsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Contacts
+          </button>
         </div>
 
         {/* Prominent Voice & Video Call Buttons */}
@@ -466,6 +605,71 @@ export default function CallsTab() {
         }
         defaultKind={newCallKind}
       />
+
+      {/* Contacts Sheet */}
+      <Sheet open={contactsOpen} onOpenChange={setContactsOpen}>
+        <SheetContent
+          side="bottom"
+          data-ocid="calls.contacts.sheet"
+          className="rounded-t-3xl max-h-[75vh] overflow-y-auto px-4 pb-6"
+        >
+          <SheetHeader className="mb-3">
+            <SheetTitle className="font-display font-bold flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Contacts
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-2">
+            {SAMPLE_CONTACTS.map((contact, idx) => (
+              <div
+                key={contact.id}
+                data-ocid={`calls.contacts.item.${idx + 1}`}
+                className="bg-card rounded-2xl border border-border px-4 py-3 flex items-center gap-3"
+              >
+                <div
+                  className={`w-10 h-10 rounded-full ${contact.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}
+                >
+                  {contact.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-semibold text-sm text-foreground">
+                    {contact.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {contact.phonexId}
+                  </p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    data-ocid={`calls.contacts.voice.button.${idx + 1}`}
+                    onClick={() => {
+                      setContactsOpen(false);
+                      startCall(contact.name, contact.initials, "voice");
+                    }}
+                    className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center hover:bg-emerald-500/30 transition-colors"
+                    aria-label={`Voice call ${contact.name}`}
+                  >
+                    <Phone className="w-4 h-4 text-emerald-500" />
+                  </button>
+                  <button
+                    type="button"
+                    data-ocid={`calls.contacts.video.button.${idx + 1}`}
+                    onClick={() => {
+                      setContactsOpen(false);
+                      startCall(contact.name, contact.initials, "video");
+                    }}
+                    className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
+                    aria-label={`Video call ${contact.name}`}
+                  >
+                    <Video className="w-4 h-4 text-blue-500" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

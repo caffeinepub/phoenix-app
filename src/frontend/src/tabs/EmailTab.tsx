@@ -1,5 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,10 +22,62 @@ import {
   Paperclip,
   Plus,
   Star,
+  Users,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
+
+const SAMPLE_CONTACTS = [
+  {
+    id: "1",
+    name: "James Okafor",
+    initials: "JO",
+    color: "bg-blue-500",
+    phonexId: "PXP-AB12CD34",
+    email: "james.okafor@phonex.app",
+  },
+  {
+    id: "2",
+    name: "Sara Müller",
+    initials: "SM",
+    color: "bg-rose-500",
+    phonexId: "PXP-EF56GH78",
+    email: "sara.muller@phonex.app",
+  },
+  {
+    id: "3",
+    name: "Liu Wei",
+    initials: "LW",
+    color: "bg-violet-500",
+    phonexId: "PXP-IJ90KL12",
+    email: "liu.wei@phonex.app",
+  },
+  {
+    id: "4",
+    name: "Amina Hassan",
+    initials: "AH",
+    color: "bg-emerald-500",
+    phonexId: "PXP-MN34OP56",
+    email: "amina.hassan@phonex.app",
+  },
+  {
+    id: "5",
+    name: "Carlos Mendez",
+    initials: "CM",
+    color: "bg-orange-500",
+    phonexId: "PXP-QR78ST90",
+    email: "carlos.mendez@phonex.app",
+  },
+  {
+    id: "6",
+    name: "Yuki Tanaka",
+    initials: "YT",
+    color: "bg-teal-500",
+    phonexId: "PXP-UV12WX34",
+    email: "yuki.tanaka@phonex.app",
+  },
+];
 
 const SAMPLE_EMAILS = [
   {
@@ -84,6 +142,10 @@ export default function EmailTab() {
   const attachIdRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Contacts state
+  const [headerContactsOpen, setHeaderContactsOpen] = useState(false);
+  const [composeContactsOpen, setComposeContactsOpen] = useState(false);
+
   function handleSend() {
     setComposeOpen(false);
     resetForm();
@@ -125,6 +187,19 @@ export default function EmailTab() {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
+  // Select contact from header contacts sheet → pre-fill To and open compose
+  function handleHeaderContactSelect(email: string) {
+    setTo(email);
+    setHeaderContactsOpen(false);
+    setComposeOpen(true);
+  }
+
+  // Select contact from compose contacts dialog → fill To field
+  function handleComposeContactSelect(email: string) {
+    setTo(email);
+    setComposeContactsOpen(false);
+  }
+
   return (
     <div className="flex flex-col h-full relative">
       <div className="px-4 py-4 flex justify-between items-center">
@@ -137,14 +212,25 @@ export default function EmailTab() {
             {SAMPLE_EMAILS.filter((e) => e.unread).length} new
           </Badge>
         </div>
-        <button
-          type="button"
-          data-ocid="email.primary_button"
-          onClick={() => setComposeOpen(true)}
-          className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all"
-        >
-          <Plus className="w-5 h-5 text-primary-foreground" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-ocid="email.contacts.open_modal_button"
+            onClick={() => setHeaderContactsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Contacts
+          </button>
+          <button
+            type="button"
+            data-ocid="email.primary_button"
+            onClick={() => setComposeOpen(true)}
+            className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all"
+          >
+            <Plus className="w-5 h-5 text-primary-foreground" />
+          </button>
+        </div>
       </div>
 
       {/* Add Email row - Feels style */}
@@ -242,6 +328,15 @@ export default function EmailTab() {
                   To
                 </Label>
                 <div className="flex gap-2">
+                  <button
+                    type="button"
+                    data-ocid="email.compose.contacts.open_modal_button"
+                    onClick={() => setComposeContactsOpen(true)}
+                    className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Contacts
+                  </button>
                   <button
                     type="button"
                     data-ocid="email.cc.toggle"
@@ -448,6 +543,90 @@ export default function EmailTab() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Header Contacts Sheet — tap contact to pre-fill compose and open it */}
+      <Sheet open={headerContactsOpen} onOpenChange={setHeaderContactsOpen}>
+        <SheetContent
+          side="bottom"
+          data-ocid="email.contacts.dialog"
+          className="rounded-t-3xl max-h-[75vh] overflow-y-auto px-4 pb-6"
+        >
+          <SheetHeader className="mb-3">
+            <SheetTitle className="font-display font-bold flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Contacts
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-2">
+            {SAMPLE_CONTACTS.map((contact, idx) => (
+              <button
+                key={contact.id}
+                type="button"
+                data-ocid={`email.contacts.item.${idx + 1}`}
+                onClick={() => handleHeaderContactSelect(contact.email)}
+                className="bg-card rounded-2xl border border-border px-4 py-3 flex items-center gap-3 hover:bg-accent/50 transition-colors text-left w-full"
+              >
+                <div
+                  className={`w-10 h-10 rounded-full ${contact.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}
+                >
+                  {contact.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-semibold text-sm text-foreground">
+                    {contact.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {contact.email}
+                  </p>
+                </div>
+                <Badge className="bg-primary/10 text-primary border-0 text-xs flex-shrink-0">
+                  Email
+                </Badge>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Compose Contacts Dialog — fills To field */}
+      <Dialog open={composeContactsOpen} onOpenChange={setComposeContactsOpen}>
+        <DialogContent
+          className="sm:max-w-sm"
+          data-ocid="email.compose.contacts.dialog"
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              Select Contact
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-1 py-1 max-h-64 overflow-y-auto">
+            {SAMPLE_CONTACTS.map((contact, idx) => (
+              <button
+                key={contact.id}
+                type="button"
+                data-ocid={`email.compose.contacts.item.${idx + 1}`}
+                onClick={() => handleComposeContactSelect(contact.email)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent transition-colors text-left w-full"
+              >
+                <div
+                  className={`w-8 h-8 rounded-full ${contact.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}
+                >
+                  {contact.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-foreground">
+                    {contact.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {contact.email}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
