@@ -3,7 +3,7 @@ import {
   Mail,
   MessageCircle,
   Moon,
-  Phone,
+  Sparkles,
   Sun,
   User,
   Wallet,
@@ -12,9 +12,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
-import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
 import EmailTab from "../tabs/EmailTab";
+import FeelsTab from "../tabs/FeelsTab";
 import PocketTab from "../tabs/PocketTab";
 
 interface Props {
@@ -24,7 +24,7 @@ interface Props {
 
 const TABS = [
   { id: "chats", label: "Chats", icon: MessageCircle },
-  { id: "calls", label: "Calls", icon: Phone },
+  { id: "feels", label: "Feels", icon: Sparkles },
   { id: "email", label: "Email", icon: Mail },
   { id: "pocket", label: "Pocket", icon: Wallet },
 ] as const;
@@ -38,7 +38,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
 
   const tabContent: Record<TabId, React.ReactNode> = {
     chats: <ChatsTab />,
-    calls: <CallsTab />,
+    feels: <FeelsTab />,
     email: <EmailTab />,
     pocket: <PocketTab />,
   };
@@ -138,10 +138,22 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                   />
                 )}
                 <Icon
-                  className={`w-5 h-5 transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
+                  className={`w-5 h-5 transition-colors ${
+                    isActive
+                      ? tab.id === "feels"
+                        ? "text-pink-500"
+                        : "text-primary"
+                      : "text-muted-foreground"
+                  }`}
                 />
                 <span
-                  className={`text-xs font-body transition-colors ${isActive ? "text-primary font-semibold" : "text-muted-foreground"}`}
+                  className={`text-xs font-body transition-colors ${
+                    isActive
+                      ? tab.id === "feels"
+                        ? "text-pink-500 font-semibold"
+                        : "text-primary font-semibold"
+                      : "text-muted-foreground"
+                  }`}
                 >
                   {tab.label}
                 </span>
