@@ -33,7 +33,10 @@ function AppInner() {
         />
       )}
       {screen === "profile" && (
-        <ProfileScreen onBack={() => setScreen("home")} />
+        <ProfileScreen
+          onBack={() => setScreen("home")}
+          onLogout={() => setScreen("login")}
+        />
       )}
       <Toaster />
     </div>

@@ -2,10 +2,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   Phone,
   PhoneIncoming,
   PhoneMissed,
   PhoneOutgoing,
+  Plus,
   Video,
   X,
 } from "lucide-react";
@@ -126,7 +135,6 @@ function CallOverlay({ call, onEnd }: { call: ActiveCall; onEnd: () => void }) {
     >
       <div className="flex flex-col items-center gap-4 mt-4">
         <div className="relative">
-          {/* Pulsing rings */}
           <motion.div
             animate={{ scale: [1, 1.35, 1], opacity: [0.4, 0, 0.4] }}
             transition={{
@@ -199,49 +207,163 @@ function CallOverlay({ call, onEnd }: { call: ActiveCall; onEnd: () => void }) {
   );
 }
 
+// New Call Dialog
+function NewCallDialog({
+  open,
+  onClose,
+  onCall,
+  defaultKind,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCall: (name: string, kind: CallKind) => void;
+  defaultKind?: CallKind;
+}) {
+  const [contactName, setContactName] = useState("");
+  const [kind, setKind] = useState<CallKind>(defaultKind ?? "voice");
+
+  function handleCall() {
+    if (!contactName.trim()) return;
+    onCall(contactName.trim(), kind);
+    setContactName("");
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-sm" data-ocid="calls.dialog">
+        <DialogHeader>
+          <DialogTitle className="font-display text-lg">New Call</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {/* Call type toggle */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              data-ocid="calls.voice.toggle"
+              onClick={() => setKind("voice")}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                kind === "voice"
+                  ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
+                  : "border-border text-muted-foreground hover:border-emerald-500/40"
+              }`}
+            >
+              <Phone className="w-4 h-4" />
+              Voice Call
+            </button>
+            <button
+              type="button"
+              data-ocid="calls.video.toggle"
+              onClick={() => setKind("video")}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                kind === "video"
+                  ? "border-blue-500 bg-blue-500/10 text-blue-600"
+                  : "border-border text-muted-foreground hover:border-blue-500/40"
+              }`}
+            >
+              <Video className="w-4 h-4" />
+              Video Call
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-semibold">Contact Name or Username</Label>
+            <Input
+              data-ocid="calls.contact.input"
+              placeholder="Enter name or username..."
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCall()}
+              autoFocus
+            />
+          </div>
+
+          <Button
+            data-ocid="calls.call.submit_button"
+            onClick={handleCall}
+            disabled={!contactName.trim()}
+            className={`w-full font-semibold ${
+              kind === "voice"
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                : "bg-blue-500 hover:bg-blue-600 text-white"
+            }`}
+          >
+            {kind === "voice" ? (
+              <Phone className="mr-2 w-4 h-4" />
+            ) : (
+              <Video className="mr-2 w-4 h-4" />
+            )}
+            Start {kind === "voice" ? "Voice" : "Video"} Call
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function CallsTab() {
   const [activeCall, setActiveCall] = useState<ActiveCall | null>(null);
+  const [newCallOpen, setNewCallOpen] = useState(false);
+  const [newCallKind, setNewCallKind] = useState<CallKind | undefined>(
+    undefined,
+  );
 
   function startCall(name: string, avatar: string, kind: CallKind) {
-    setActiveCall({ name, avatar, kind });
+    setActiveCall({ name, avatar: avatar.substring(0, 2).toUpperCase(), kind });
+  }
+
+  function openNewCall(kind?: CallKind) {
+    setNewCallKind(kind);
+    setNewCallOpen(true);
   }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto relative">
-      {/* Header */}
-      <div className="px-4 py-4 flex justify-between items-center">
-        <div>
-          <h2 className="font-display font-bold text-lg text-foreground">
-            Recent Calls
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {SAMPLE_CALLS.length} calls
-          </p>
+      {/* Header with prominent call buttons */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-display font-bold text-lg text-foreground">
+              Calls
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {SAMPLE_CALLS.length} recent calls
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+
+        {/* Prominent Voice & Video Call Buttons */}
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             data-ocid="calls.primary_button"
-            onClick={() => startCall("New Contact", "NC", "voice")}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full phoenix-gradient text-primary-foreground text-xs font-medium shadow-md hover:opacity-90 transition-opacity"
+            onClick={() => openNewCall("voice")}
+            className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base shadow-lg hover:bg-emerald-600 active:scale-95 transition-all"
           >
-            <Phone className="w-3.5 h-3.5" />
-            Voice
+            <Phone className="w-5 h-5" />
+            Voice Call
           </button>
           <button
             type="button"
             data-ocid="calls.secondary_button"
-            onClick={() => startCall("New Contact", "NC", "video")}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-blue-500 text-white text-xs font-medium shadow-md hover:opacity-90 transition-opacity"
+            onClick={() => openNewCall("video")}
+            className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-blue-500 text-white font-bold text-base shadow-lg hover:bg-blue-600 active:scale-95 transition-all"
           >
-            <Video className="w-3.5 h-3.5" />
-            Video
+            <Video className="w-5 h-5" />
+            Video Call
           </button>
         </div>
       </div>
 
+      {/* Recent calls label */}
+      <div className="px-4 pb-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Recent Calls
+        </p>
+      </div>
+
       {/* Call list */}
-      <div className="px-4 pb-6 flex flex-col gap-2" data-ocid="calls.list">
+      <div className="px-4 pb-24 flex flex-col gap-2" data-ocid="calls.list">
         {SAMPLE_CALLS.map((call, idx) => {
           const { Icon, color, label } = CALL_META[call.type];
           return (
@@ -294,7 +416,7 @@ export default function CallsTab() {
                 <div className="flex gap-1.5">
                   <button
                     type="button"
-                    data-ocid={`calls.item.${idx + 1}`}
+                    data-ocid={`calls.voice.button.${idx + 1}`}
                     onClick={() => startCall(call.name, call.avatar, "voice")}
                     className="w-7 h-7 rounded-full bg-emerald-500/15 flex items-center justify-center hover:bg-emerald-500/30 transition-colors"
                     aria-label={`Voice call ${call.name}`}
@@ -303,7 +425,7 @@ export default function CallsTab() {
                   </button>
                   <button
                     type="button"
-                    data-ocid={`calls.item.${idx + 1}`}
+                    data-ocid={`calls.video.button.${idx + 1}`}
                     onClick={() => startCall(call.name, call.avatar, "video")}
                     className="w-7 h-7 rounded-full bg-blue-500/15 flex items-center justify-center hover:bg-blue-500/30 transition-colors"
                     aria-label={`Video call ${call.name}`}
@@ -317,12 +439,33 @@ export default function CallsTab() {
         })}
       </div>
 
+      {/* FAB + */}
+      <button
+        type="button"
+        data-ocid="calls.open_modal_button"
+        onClick={() => openNewCall(undefined)}
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full phoenix-gradient shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-all z-10"
+        aria-label="New call"
+      >
+        <Plus className="w-6 h-6 text-primary-foreground" />
+      </button>
+
       {/* Active call overlay */}
       <AnimatePresence>
         {activeCall && (
           <CallOverlay call={activeCall} onEnd={() => setActiveCall(null)} />
         )}
       </AnimatePresence>
+
+      {/* New call dialog */}
+      <NewCallDialog
+        open={newCallOpen}
+        onClose={() => setNewCallOpen(false)}
+        onCall={(name, kind) =>
+          startCall(name, name.substring(0, 2).toUpperCase(), kind)
+        }
+        defaultKind={newCallKind}
+      />
     </div>
   );
 }

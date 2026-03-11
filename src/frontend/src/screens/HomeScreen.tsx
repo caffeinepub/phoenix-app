@@ -3,6 +3,7 @@ import {
   Mail,
   MessageCircle,
   Moon,
+  Phone,
   Sparkles,
   Sun,
   User,
@@ -10,8 +11,10 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import phonexLogo from "/assets/Phonex.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
 import EmailTab from "../tabs/EmailTab";
 import FeelsTab from "../tabs/FeelsTab";
@@ -27,6 +30,7 @@ const TABS = [
   { id: "feels", label: "Feels", icon: Sparkles },
   { id: "email", label: "Email", icon: Mail },
   { id: "pocket", label: "Pocket", icon: Wallet },
+  { id: "calls", label: "Calls", icon: Phone },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -39,6 +43,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
   const tabContent: Record<TabId, React.ReactNode> = {
     chats: <ChatsTab />,
     feels: <FeelsTab />,
+    calls: <CallsTab />,
     email: <EmailTab />,
     pocket: <PocketTab />,
   };
@@ -49,8 +54,8 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-2">
             <img
-              src="/assets/uploads/Phonex-1.jpg"
-              alt="Phoenix Logo"
+              src={phonexLogo}
+              alt="Phonex Logo"
               className="w-8 h-8 rounded-xl object-cover"
             />
             <h1
@@ -60,7 +65,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                 textShadow: "0 1px 3px rgba(255,255,255,0.6)",
               }}
             >
-              Phoenix
+              Phonex
             </h1>
           </div>
           <div className="flex items-center gap-1">
@@ -84,7 +89,15 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
               className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors relative"
               aria-label="Profile"
             >
-              <User className="w-4 h-4 text-white" />
+              {currentUser?.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt="avatar"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <User className="w-4 h-4 text-white" />
+              )}
               {currentUser?.displayName && (
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
               )}
@@ -142,7 +155,9 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                     isActive
                       ? tab.id === "feels"
                         ? "text-pink-500"
-                        : "text-primary"
+                        : tab.id === "calls"
+                          ? "text-emerald-500"
+                          : "text-primary"
                       : "text-muted-foreground"
                   }`}
                 />
@@ -151,7 +166,9 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                     isActive
                       ? tab.id === "feels"
                         ? "text-pink-500 font-semibold"
-                        : "text-primary font-semibold"
+                        : tab.id === "calls"
+                          ? "text-emerald-500 font-semibold"
+                          : "text-primary font-semibold"
                       : "text-muted-foreground"
                   }`}
                 >

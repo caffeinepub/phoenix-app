@@ -1,3 +1,4 @@
+import AvatarPicker from "@/components/AvatarPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ interface Props {
 
 export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
   const { register } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: "",
     phone: "",
@@ -55,7 +57,7 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
     }
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    register(form);
+    register({ ...form, avatarUrl: avatarUrl ?? undefined });
     setIsLoading(false);
     onRegisterSuccess();
   };
@@ -97,136 +99,143 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
         transition={{ duration: 0.4 }}
         className="flex-1 bg-background rounded-t-3xl -mt-4 px-6 pt-8 pb-8 flex flex-col gap-5"
       >
+        {/* Avatar picker section */}
+        <div className="bg-muted/30 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-foreground mb-3 text-center">
+            Profile Picture
+          </p>
+          <AvatarPicker value={avatarUrl} onChange={setAvatarUrl} />
+        </div>
+
         <div className="space-y-1.5">
-          <Label htmlFor="displayName" className="text-foreground font-medium">
-            Display Name
+          <Label
+            htmlFor="displayName"
+            className="text-foreground font-semibold"
+          >
+            Full Name
           </Label>
           <Input
             id="displayName"
             data-ocid="register.input"
-            placeholder="Your name"
+            placeholder="Your full name"
             value={form.displayName}
             onChange={(e) => update("displayName", e.target.value)}
-            className="bg-secondary border-border"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="reg-email" className="text-foreground font-medium">
-            Email <span className="text-destructive">*</span>
+          <Label htmlFor="email" className="text-foreground font-semibold">
+            Email Address <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              id="reg-email"
-              data-ocid="register.input"
+              id="email"
+              data-ocid="register.email.input"
               type="email"
               placeholder="you@example.com"
+              className="pl-9"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
-              className="pl-10 bg-secondary border-border"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="reg-phone" className="text-foreground font-medium">
-            Phone <span className="text-destructive">*</span>
+          <Label htmlFor="phone" className="text-foreground font-semibold">
+            Phone Number <span className="text-destructive">*</span>
           </Label>
           <div className="flex gap-2">
             <div className="relative w-24">
-              <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
               <Input
-                data-ocid="register.input"
-                placeholder="+1"
+                data-ocid="register.country.input"
                 value={form.countryCode}
                 onChange={(e) => update("countryCode", e.target.value)}
-                className="pl-8 bg-secondary border-border text-center"
+                className="pl-7 text-sm"
               />
             </div>
             <div className="relative flex-1">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                id="reg-phone"
-                data-ocid="register.input"
+                id="phone"
+                data-ocid="register.phone.input"
                 type="tel"
-                placeholder="555-0100"
+                placeholder="Phone number"
+                className="pl-9"
                 value={form.phone}
                 onChange={(e) => update("phone", e.target.value)}
-                className="pl-10 bg-secondary border-border"
               />
             </div>
           </div>
         </div>
 
-        {/* Bank Details Section */}
-        <div className="flex items-center gap-3 pt-1">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-            Bank Details
-          </span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
         <div className="space-y-1.5">
-          <Label
-            htmlFor="reg-bank-name"
-            className="text-foreground font-medium"
-          >
-            Bank Name <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              id="reg-bank-name"
-              data-ocid="register.input"
-              placeholder="e.g. Chase Bank, HSBC"
-              value={form.bankName}
-              onChange={(e) => update("bankName", e.target.value)}
-              className="pl-10 bg-secondary border-border"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="reg-iban" className="text-foreground font-medium">
-            Account / IBAN Number <span className="text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              id="reg-iban"
-              data-ocid="register.input"
-              placeholder="e.g. GB29 NWBK 6016 1331 9268 19"
-              value={form.ibanNumber}
-              onChange={(e) => update("ibanNumber", e.target.value)}
-              className="pl-10 bg-secondary border-border font-mono text-sm tracking-wide"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="reg-password" className="text-foreground font-medium">
+          <Label htmlFor="password" className="text-foreground font-semibold">
             Password <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              id="reg-password"
-              data-ocid="register.input"
+              id="password"
+              data-ocid="register.password.input"
               type="password"
-              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+              placeholder="Minimum 4 characters"
+              className="pl-9"
               value={form.password}
               onChange={(e) => update("password", e.target.value)}
-              className="pl-10 bg-secondary border-border"
             />
+          </div>
+        </div>
+
+        <div className="border-t border-border pt-4 space-y-4">
+          <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-primary" />
+            Bank Account Details
+          </p>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="bankName" className="text-foreground font-semibold">
+              Bank Name <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="bankName"
+                data-ocid="register.bank.input"
+                placeholder="e.g. Standard Chartered"
+                className="pl-9"
+                value={form.bankName}
+                onChange={(e) => update("bankName", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="ibanNumber"
+              className="text-foreground font-semibold"
+            >
+              Account / IBAN Number <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="ibanNumber"
+                data-ocid="register.iban.input"
+                placeholder="Account or IBAN number"
+                className="pl-9"
+                value={form.ibanNumber}
+                onChange={(e) => update("ibanNumber", e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
         {error && (
           <p
+            className="text-sm text-destructive bg-destructive/10 rounded-xl px-3 py-2"
             data-ocid="register.error_state"
-            className="text-destructive text-sm"
           >
             {error}
           </p>
@@ -236,22 +245,10 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
           data-ocid="register.submit_button"
           onClick={handleRegister}
           disabled={isLoading}
-          className="w-full h-12 phoenix-gradient text-primary-foreground font-display font-bold text-base rounded-xl border-0 hover:opacity-90 transition-opacity mt-2"
+          className="w-full h-12 text-base font-bold rounded-2xl mt-2"
         >
-          {isLoading ? "Creating account..." : "Create Account"}
+          {isLoading ? "Creating account…" : "Create Account"}
         </Button>
-
-        <p className="text-center text-muted-foreground text-xs">
-          Already have an account?{" "}
-          <button
-            type="button"
-            data-ocid="register.link"
-            onClick={onBack}
-            className="text-primary font-semibold hover:underline"
-          >
-            Sign In
-          </button>
-        </p>
       </motion.div>
     </div>
   );

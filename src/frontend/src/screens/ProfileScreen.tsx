@@ -1,3 +1,15 @@
+import AvatarPicker from "@/components/AvatarPicker";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,54 +17,46 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Building2,
-  Camera,
   Check,
   CreditCard,
   Edit3,
   Globe,
+  LogOut,
   Mail,
   Phone,
-  User,
+  Settings,
+  Trash2,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
   onBack: () => void;
+  onLogout: () => void;
 }
 
-export default function ProfileScreen({ onBack }: Props) {
-  const { currentUser, updateProfile } = useAuth();
+export default function ProfileScreen({ onBack, onLogout }: Props) {
+  const { currentUser, updateProfile, logout, deleteAccount } = useAuth();
   const [editing, setEditing] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    currentUser?.avatarUrl ?? null,
+  );
   const [form, setForm] = useState({
     displayName: currentUser?.displayName || "",
     phone: currentUser?.phone || "",
     countryCode: currentUser?.countryCode || "+1",
-    bankName: "",
-    accountNumber: "",
+    bankName: currentUser?.bankName || "",
+    ibanNumber: currentUser?.ibanNumber || "",
   });
 
   const initials = currentUser?.displayName
     ? currentUser.displayName.slice(0, 2).toUpperCase()
     : currentUser?.email?.slice(0, 2).toUpperCase() || "?";
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result;
-      if (typeof result === "string") setAvatarUrl(result);
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSave = () => {
-    updateProfile(form);
+    updateProfile({ ...form, avatarUrl: avatarUrl ?? undefined });
     setEditing(false);
   };
 
@@ -61,77 +65,69 @@ export default function ProfileScreen({ onBack }: Props) {
       displayName: currentUser?.displayName || "",
       phone: currentUser?.phone || "",
       countryCode: currentUser?.countryCode || "+1",
-      bankName: form.bankName,
-      accountNumber: form.accountNumber,
+      bankName: currentUser?.bankName || "",
+      ibanNumber: currentUser?.ibanNumber || "",
     });
+    setAvatarUrl(currentUser?.avatarUrl ?? null);
     setEditing(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    onLogout();
+  };
+
+  const handleDeleteAccount = () => {
+    deleteAccount();
+    onLogout();
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="phoenix-gradient px-4 pb-8">
-        <div className="flex items-center justify-between pt-4 mb-6">
+      <div className="phoenix-gradient px-4 pb-12">
+        <div className="flex items-center justify-between pt-4 mb-2">
+          {/* Back button - always visible */}
           <button
             type="button"
             data-ocid="profile.button"
             onClick={onBack}
-            className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+            className="w-10 h-10 rounded-full bg-white/30 border border-white/50 flex items-center justify-center hover:bg-white/50 transition-colors shadow"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-5 h-5 text-primary-foreground" />
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <h1 className="font-display font-bold text-primary-foreground">
+          <h1 className="font-display text-lg font-bold text-primary-foreground">
             Profile
           </h1>
-          <button
-            type="button"
-            data-ocid="profile.edit_button"
-            onClick={() => setEditing((e) => !e)}
-            className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-          >
-            <Edit3 className="w-4 h-4 text-primary-foreground" />
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", bounce: 0.4 }}
-            className="relative"
-          >
-            <Avatar className="w-24 h-24 border-4 border-white/40 shadow-xl">
-              {avatarUrl && (
-                <AvatarImage src={avatarUrl} alt="Profile picture" />
-              )}
-              <AvatarFallback className="phoenix-gradient text-primary-foreground font-display font-black text-2xl">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            {/* Camera button always visible */}
+          {!editing ? (
             <button
               type="button"
-              data-ocid="profile.upload_button"
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border-2 border-white/60"
-              aria-label="Upload profile picture"
+              data-ocid="profile.edit_button"
+              onClick={() => setEditing(true)}
+              className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center hover:bg-white/30 transition-colors"
             >
-              <Camera className="w-4 h-4 text-gray-700" />
+              <Edit3 className="w-4 h-4 text-white" />
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleAvatarChange}
-              data-ocid="profile.dropzone"
-            />
-          </motion.div>
-          <h2 className="font-display font-bold text-xl text-primary-foreground mt-3">
-            {currentUser?.displayName || "Phoenix User"}
-          </h2>
-          <p className="text-primary-foreground/75 text-sm">
-            {currentUser?.email}
-          </p>
+          ) : (
+            <div className="flex gap-1">
+              <button
+                type="button"
+                data-ocid="profile.save_button"
+                onClick={handleSave}
+                className="w-9 h-9 rounded-full bg-white/30 flex items-center justify-center hover:bg-white/40 transition-colors"
+              >
+                <Check className="w-4 h-4 text-white" />
+              </button>
+              <button
+                type="button"
+                data-ocid="profile.cancel_button"
+                onClick={handleCancel}
+                className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-red-400/40 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -139,158 +135,205 @@ export default function ProfileScreen({ onBack }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex-1 bg-background rounded-t-3xl -mt-5 px-5 pt-7 pb-8 flex flex-col gap-5"
+        className="flex-1 bg-background rounded-t-3xl -mt-8 px-6 pt-6 pb-10"
       >
-        {editing ? (
-          <>
-            <h3 className="font-display font-bold text-foreground">
-              Edit Profile
-            </h3>
+        {/* Avatar section */}
+        <div className="flex flex-col items-center mb-6">
+          {editing ? (
+            <AvatarPicker value={avatarUrl} onChange={setAvatarUrl} />
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Avatar className="w-20 h-20 border-4 border-primary/20">
+                <AvatarImage src={avatarUrl ?? currentUser?.avatarUrl} />
+                <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <p className="font-display text-xl font-bold text-foreground">
+                {currentUser?.displayName || "Your Name"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {currentUser?.email}
+              </p>
+            </div>
+          )}
+        </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-foreground font-medium">
-                Display Name
-              </Label>
+        <div className="space-y-4">
+          {/* Display Name */}
+          <div className="space-y-1.5">
+            <Label className="text-foreground font-semibold">Full Name</Label>
+            {editing ? (
               <Input
-                data-ocid="profile.input"
+                data-ocid="profile.name.input"
                 value={form.displayName}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, displayName: e.target.value }))
                 }
-                className="bg-secondary border-border"
                 placeholder="Your name"
               />
-            </div>
+            ) : (
+              <p className="text-foreground bg-muted/40 rounded-xl px-3 py-2 text-sm">
+                {form.displayName || "—"}
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-foreground font-medium">Phone</Label>
+          {/* Email */}
+          <div className="space-y-1.5">
+            <Label className="text-foreground font-semibold flex items-center gap-1">
+              <Mail className="w-3 h-3" /> Email
+            </Label>
+            <p className="text-foreground bg-muted/40 rounded-xl px-3 py-2 text-sm text-muted-foreground">
+              {currentUser?.email || "—"}
+            </p>
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-1.5">
+            <Label className="text-foreground font-semibold flex items-center gap-1">
+              <Phone className="w-3 h-3" /> Phone
+            </Label>
+            {editing ? (
               <div className="flex gap-2">
+                <div className="relative w-24">
+                  <Globe className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    data-ocid="profile.country.input"
+                    value={form.countryCode}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, countryCode: e.target.value }))
+                    }
+                    className="pl-7 text-sm"
+                  />
+                </div>
                 <Input
-                  data-ocid="profile.input"
-                  value={form.countryCode}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, countryCode: e.target.value }))
-                  }
-                  className="w-20 bg-secondary border-border text-center"
-                  placeholder="+1"
-                />
-                <Input
-                  data-ocid="profile.input"
+                  data-ocid="profile.phone.input"
                   value={form.phone}
                   onChange={(e) =>
                     setForm((p) => ({ ...p, phone: e.target.value }))
                   }
-                  className="flex-1 bg-secondary border-border"
-                  placeholder="555-0100"
+                  placeholder="Phone number"
+                  className="flex-1"
                 />
               </div>
-            </div>
+            ) : (
+              <p className="text-foreground bg-muted/40 rounded-xl px-3 py-2 text-sm">
+                {form.countryCode} {form.phone || "—"}
+              </p>
+            )}
+          </div>
+
+          {/* Bank section */}
+          <div className="border-t border-border pt-4 space-y-4">
+            <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              Bank Account
+            </p>
 
             <div className="space-y-1.5">
-              <Label className="text-foreground font-medium">Bank Name</Label>
-              <Input
-                data-ocid="profile.input"
-                value={form.bankName}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, bankName: e.target.value }))
-                }
-                className="bg-secondary border-border"
-                placeholder="e.g. Chase, Barclays"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-foreground font-medium">
-                Account Number / IBAN
-              </Label>
-              <Input
-                data-ocid="profile.input"
-                value={form.accountNumber}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, accountNumber: e.target.value }))
-                }
-                className="bg-secondary border-border"
-                placeholder="GB29 NWBK 6016 1331 9268 19"
-              />
-            </div>
-
-            <div className="flex gap-3 mt-2">
-              <Button
-                data-ocid="profile.cancel_button"
-                variant="outline"
-                onClick={handleCancel}
-                className="flex-1 rounded-xl border-border"
-              >
-                <X className="w-4 h-4 mr-1" /> Cancel
-              </Button>
-              <Button
-                data-ocid="profile.save_button"
-                onClick={handleSave}
-                className="flex-1 phoenix-gradient text-primary-foreground rounded-xl border-0"
-              >
-                <Check className="w-4 h-4 mr-1" /> Save
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h3 className="font-display font-bold text-foreground">
-              Account Info
-            </h3>
-
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  icon: User,
-                  label: "Display Name",
-                  value: currentUser?.displayName || "Not set",
-                },
-                {
-                  icon: Mail,
-                  label: "Email",
-                  value: currentUser?.email || "Not set",
-                },
-                {
-                  icon: Phone,
-                  label: "Phone",
-                  value: currentUser?.phone
-                    ? `${currentUser.countryCode} ${currentUser.phone}`
-                    : "Not set",
-                },
-                {
-                  icon: Globe,
-                  label: "Country Code",
-                  value: currentUser?.countryCode || "Not set",
-                },
-                {
-                  icon: Building2,
-                  label: "Bank Name",
-                  value: form.bankName || "Not set",
-                },
-                {
-                  icon: CreditCard,
-                  label: "Account / IBAN",
-                  value: form.accountNumber || "Not set",
-                },
-              ].map(({ icon: Icon, label, value }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-4 bg-card rounded-xl p-4 border border-border"
-                >
-                  <div className="w-10 h-10 rounded-xl phoenix-gradient flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                    <p className="font-body font-medium text-foreground">
-                      {value}
-                    </p>
-                  </div>
+              <Label className="text-foreground font-semibold">Bank Name</Label>
+              {editing ? (
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    data-ocid="profile.bank.input"
+                    value={form.bankName}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, bankName: e.target.value }))
+                    }
+                    placeholder="Bank name"
+                    className="pl-9"
+                  />
                 </div>
-              ))}
+              ) : (
+                <p className="text-foreground bg-muted/40 rounded-xl px-3 py-2 text-sm">
+                  {form.bankName || "—"}
+                </p>
+              )}
             </div>
-          </>
-        )}
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground font-semibold">
+                Account / IBAN Number
+              </Label>
+              {editing ? (
+                <div className="relative">
+                  <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    data-ocid="profile.iban.input"
+                    value={form.ibanNumber}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, ibanNumber: e.target.value }))
+                    }
+                    placeholder="Account or IBAN number"
+                    className="pl-9"
+                  />
+                </div>
+              ) : (
+                <p className="text-foreground bg-muted/40 rounded-xl px-3 py-2 text-sm">
+                  {form.ibanNumber || "—"}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Account Settings */}
+          <div className="border-t border-border pt-4 space-y-3">
+            <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              Account Settings
+            </p>
+
+            {/* Logout */}
+            <Button
+              type="button"
+              data-ocid="profile.logout.button"
+              variant="outline"
+              className="w-full flex items-center gap-2 justify-start text-foreground border-border hover:bg-muted/60"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 text-primary" />
+              Log Out
+            </Button>
+
+            {/* Delete Account */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  data-ocid="profile.delete_button"
+                  variant="outline"
+                  className="w-full flex items-center gap-2 justify-start text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent data-ocid="profile.delete.dialog">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete your account and all associated
+                    data. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel data-ocid="profile.delete.cancel_button">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    data-ocid="profile.delete.confirm_button"
+                    onClick={handleDeleteAccount}
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                  >
+                    Delete Account
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

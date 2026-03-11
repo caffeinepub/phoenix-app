@@ -1,6 +1,26 @@
 import { Badge } from "@/components/ui/badge";
-import { Inbox, PenSquare, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ChevronDown,
+  ChevronUp,
+  Inbox,
+  Paperclip,
+  Plus,
+  Star,
+  X,
+} from "lucide-react";
 import { motion } from "motion/react";
+import { useRef, useState } from "react";
 
 const SAMPLE_EMAILS = [
   {
@@ -51,6 +71,61 @@ const SAMPLE_EMAILS = [
 ];
 
 export default function EmailTab() {
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [to, setTo] = useState("");
+  const [cc, setCc] = useState("");
+  const [bcc, setBcc] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+  const [attachments, setAttachments] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const attachIdRef = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleSend() {
+    setComposeOpen(false);
+    resetForm();
+  }
+
+  function handleCancel() {
+    setComposeOpen(false);
+    resetForm();
+  }
+
+  function resetForm() {
+    setTo("");
+    setCc("");
+    setBcc("");
+    setSubject("");
+    setBody("");
+    setShowCc(false);
+    setShowBcc(false);
+    setAttachments([]);
+    attachIdRef.current = 0;
+  }
+
+  function handleAttachmentClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+    const newFiles = Array.from(files).map((f) => {
+      attachIdRef.current += 1;
+      return { id: attachIdRef.current, name: f.name };
+    });
+    setAttachments((prev) => [...prev, ...newFiles]);
+    e.target.value = "";
+  }
+
+  function removeAttachment(id: number) {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-4 flex justify-between items-center">
@@ -66,9 +141,10 @@ export default function EmailTab() {
         <button
           type="button"
           data-ocid="email.primary_button"
-          className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md"
+          onClick={() => setComposeOpen(true)}
+          className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all"
         >
-          <PenSquare className="w-4 h-4 text-primary-foreground" />
+          <Plus className="w-5 h-5 text-primary-foreground" />
         </button>
       </div>
 
@@ -80,7 +156,9 @@ export default function EmailTab() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.06, duration: 0.3 }}
-            className={`flex items-start gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-accent/40 transition-colors ${email.unread ? "bg-primary/5" : ""}`}
+            className={`flex items-start gap-3 px-4 py-3.5 border-b border-border/50 last:border-0 cursor-pointer hover:bg-accent/40 transition-colors ${
+              email.unread ? "bg-primary/5" : ""
+            }`}
           >
             <div className="flex-shrink-0 mt-0.5">
               <div className="w-10 h-10 rounded-full phoenix-gradient flex items-center justify-center">
@@ -92,7 +170,11 @@ export default function EmailTab() {
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">
                 <span
-                  className={`font-display text-sm ${email.unread ? "font-bold text-foreground" : "font-medium text-foreground/80"}`}
+                  className={`font-display text-sm ${
+                    email.unread
+                      ? "font-bold text-foreground"
+                      : "font-medium text-foreground/80"
+                  }`}
                 >
                   {email.from}
                 </span>
@@ -106,7 +188,11 @@ export default function EmailTab() {
                 </div>
               </div>
               <p
-                className={`text-sm mt-0.5 ${email.unread ? "font-semibold text-foreground" : "text-foreground/80"}`}
+                className={`text-sm mt-0.5 ${
+                  email.unread
+                    ? "font-semibold text-foreground"
+                    : "text-foreground/80"
+                }`}
               >
                 {email.subject}
               </p>
@@ -120,6 +206,233 @@ export default function EmailTab() {
           </motion.div>
         ))}
       </div>
+
+      {/* Compose Dialog */}
+      <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
+        <DialogContent
+          data-ocid="email.dialog"
+          className="sm:max-w-md max-h-[90vh] overflow-y-auto"
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-foreground">
+              New Email
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3 py-2">
+            {/* To field */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="email-to" className="text-sm font-medium">
+                  To
+                </Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    data-ocid="email.cc.toggle"
+                    onClick={() => setShowCc((v) => !v)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      showCc
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    CC{" "}
+                    {showCc ? (
+                      <ChevronUp className="inline w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="inline w-3 h-3" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    data-ocid="email.bcc.toggle"
+                    onClick={() => setShowBcc((v) => !v)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      showBcc
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    BCC{" "}
+                    {showBcc ? (
+                      <ChevronUp className="inline w-3 h-3" />
+                    ) : (
+                      <ChevronDown className="inline w-3 h-3" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <Input
+                id="email-to"
+                data-ocid="email.to_input"
+                placeholder="recipient@example.com"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
+
+            {/* CC field */}
+            {showCc && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-1.5"
+              >
+                <Label
+                  htmlFor="email-cc"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  CC
+                </Label>
+                <Input
+                  id="email-cc"
+                  data-ocid="email.cc_input"
+                  placeholder="cc@example.com"
+                  value={cc}
+                  onChange={(e) => setCc(e.target.value)}
+                />
+              </motion.div>
+            )}
+
+            {/* BCC field */}
+            {showBcc && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex flex-col gap-1.5"
+              >
+                <Label
+                  htmlFor="email-bcc"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  BCC
+                </Label>
+                <Input
+                  id="email-bcc"
+                  data-ocid="email.bcc_input"
+                  placeholder="bcc@example.com"
+                  value={bcc}
+                  onChange={(e) => setBcc(e.target.value)}
+                />
+              </motion.div>
+            )}
+
+            {/* Subject */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email-subject" className="text-sm font-medium">
+                Subject
+              </Label>
+              <Input
+                id="email-subject"
+                data-ocid="email.subject_input"
+                placeholder="Email subject..."
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
+            </div>
+
+            {/* Body */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email-body" className="text-sm font-medium">
+                Message
+              </Label>
+              <Textarea
+                id="email-body"
+                data-ocid="email.body_textarea"
+                placeholder="Write your message..."
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+
+            {/* Attachment button */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-ocid="email.upload_button"
+                  onClick={handleAttachmentClick}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-sm text-muted-foreground hover:text-primary"
+                >
+                  <Paperclip className="w-4 h-4" />
+                  Attach files
+                </button>
+                {attachments.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {attachments.length} file{attachments.length > 1 ? "s" : ""}{" "}
+                    attached
+                  </span>
+                )}
+              </div>
+
+              {/* Attachment list */}
+              {attachments.length > 0 && (
+                <div
+                  className="flex flex-col gap-1.5"
+                  data-ocid="email.attachments.list"
+                >
+                  {attachments.map((att, idx) => (
+                    <div
+                      key={att.id}
+                      data-ocid={`email.attachments.item.${idx + 1}`}
+                      className="flex items-center justify-between bg-muted/60 rounded-lg px-3 py-1.5"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Paperclip className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-foreground truncate">
+                          {att.name}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        data-ocid={`email.attachments.delete_button.${idx + 1}`}
+                        onClick={() => removeAttachment(att.id)}
+                        className="w-5 h-5 rounded-full hover:bg-destructive/20 flex items-center justify-center flex-shrink-0 ml-2 transition-colors"
+                      >
+                        <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              data-ocid="email.cancel_button"
+              onClick={handleCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              data-ocid="email.send.submit_button"
+              onClick={handleSend}
+              disabled={!to.trim() || !subject.trim()}
+              className="phoenix-gradient text-primary-foreground border-0 hover:opacity-90"
+            >
+              Send
+              {attachments.length > 0
+                ? ` (${attachments.length} file${attachments.length > 1 ? "s" : ""})`
+                : ""}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

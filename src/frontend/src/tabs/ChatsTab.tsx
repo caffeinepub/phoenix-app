@@ -1,7 +1,26 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, MessageSquare, Mic, Play, Send, Video } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  MessageSquare,
+  Mic,
+  Play,
+  Plus,
+  Send,
+  Video,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useGetChats } from "../hooks/useQueries";
@@ -525,11 +544,444 @@ function ChatConversation({
   );
 }
 
+// Step 1: pick note type. Step 2: compose.
+type NotePickerStep = "pick" | "text" | "voice" | "video";
+
+function NewNoteDialog({
+  open,
+  onClose,
+}: { open: boolean; onClose: () => void }) {
+  const [step, setStep] = useState<NotePickerStep>("pick");
+  const [to, setTo] = useState("");
+  const [textBody, setTextBody] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function reset() {
+    setStep("pick");
+    setTo("");
+    setTextBody("");
+    setRecording(false);
+    setElapsed(0);
+    setVideoProgress(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }
+
+  function handleClose() {
+    reset();
+    onClose();
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
+  useEffect(() => {
+    if (recording) {
+      setElapsed(0);
+      setVideoProgress(0);
+      timerRef.current = setInterval(() => {
+        setElapsed((e) => {
+          if (e >= 29) {
+            stopRecording(true);
+            return 30;
+          }
+          if (step === "video") setVideoProgress(((e + 1) / 30) * 100);
+          return e + 1;
+        });
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [recording]);
+
+  function stopRecording(send: boolean) {
+    setRecording(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (send) {
+      handleClose();
+    }
+    setElapsed(0);
+    setVideoProgress(0);
+  }
+
+  function handleSendText() {
+    if (!to.trim() || !textBody.trim()) return;
+    handleClose();
+  }
+
+  const circumference = 2 * Math.PI * 18;
+  const dash = circumference - (videoProgress / 100) * circumference;
+
+  const noteTypes = [
+    {
+      type: "text" as const,
+      Icon: MessageSquare,
+      label: "Text Note",
+      desc: "Type a text message",
+      color: "bg-blue-500",
+    },
+    {
+      type: "voice" as const,
+      Icon: Mic,
+      label: "Voice Note",
+      desc: "Record up to 30 seconds",
+      color: "bg-green-500",
+    },
+    {
+      type: "video" as const,
+      Icon: Video,
+      label: "Video Note",
+      desc: "Record a 30-second clip",
+      color: "bg-purple-500",
+    },
+  ];
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) handleClose();
+      }}
+    >
+      <DialogContent data-ocid="chats.new_note.dialog" className="sm:max-w-sm">
+        {step === "pick" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="font-display font-bold text-foreground">
+                New Message
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground -mt-1 mb-1">
+              Choose a note type to send
+            </p>
+            <div className="flex flex-col gap-3">
+              {noteTypes.map(({ type, Icon, label, desc, color }) => (
+                <button
+                  key={type}
+                  type="button"
+                  data-ocid={`chats.new_note.${type}_button`}
+                  onClick={() => setStep(type)}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-secondary hover:bg-accent/50 active:scale-[0.98] transition-all text-left"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">
+                      {label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              data-ocid="chats.new_note.cancel_button"
+              onClick={handleClose}
+              className="mt-1"
+            >
+              Cancel
+            </Button>
+          </>
+        )}
+
+        {step === "text" && (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep("pick")}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  data-ocid="chats.new_note.text.back_button"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <DialogTitle className="font-display font-bold text-foreground">
+                  Text Note
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 py-1">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="note-to" className="text-sm font-medium">
+                  To
+                </Label>
+                <Input
+                  id="note-to"
+                  data-ocid="chats.new_note.text.to_input"
+                  placeholder="Contact name..."
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="note-body" className="text-sm font-medium">
+                  Message
+                </Label>
+                <Textarea
+                  id="note-body"
+                  data-ocid="chats.new_note.text.body_textarea"
+                  placeholder="Write your message..."
+                  value={textBody}
+                  onChange={(e) => setTextBody(e.target.value)}
+                  className="min-h-[100px] resize-none"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                data-ocid="chats.new_note.text.cancel_button"
+                onClick={handleClose}
+              >
+                Cancel
+              </Button>
+              <Button
+                data-ocid="chats.new_note.text.submit_button"
+                onClick={handleSendText}
+                disabled={!to.trim() || !textBody.trim()}
+                className="phoenix-gradient text-primary-foreground border-0 hover:opacity-90"
+              >
+                <Send className="w-4 h-4 mr-1" /> Send
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {step === "voice" && (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecording(false);
+                    setStep("pick");
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  data-ocid="chats.new_note.voice.back_button"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <DialogTitle className="font-display font-bold text-foreground">
+                  Voice Note
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 py-1">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="voice-to" className="text-sm font-medium">
+                  To
+                </Label>
+                <Input
+                  id="voice-to"
+                  data-ocid="chats.new_note.voice.to_input"
+                  placeholder="Contact name..."
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-4 py-4">
+                <button
+                  type="button"
+                  data-ocid="chats.new_note.voice.primary_button"
+                  onClick={() =>
+                    recording ? stopRecording(true) : setRecording(true)
+                  }
+                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                    recording ? "bg-destructive scale-110" : "bg-green-500"
+                  }`}
+                >
+                  <Mic className="w-7 h-7 text-white" />
+                </button>
+                {recording ? (
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+                      transition={{
+                        repeat: Number.POSITIVE_INFINITY,
+                        duration: 1,
+                      }}
+                      className="w-2.5 h-2.5 rounded-full bg-destructive"
+                    />
+                    <span className="text-sm font-mono font-semibold text-foreground">
+                      {formatDuration(elapsed)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      / 0:30 max
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Tap the mic to start recording
+                    <br />
+                    (max 30 seconds)
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                data-ocid="chats.new_note.voice.cancel_button"
+                onClick={handleClose}
+              >
+                Cancel
+              </Button>
+              {recording && (
+                <Button
+                  data-ocid="chats.new_note.voice.stop_button"
+                  onClick={() => stopRecording(true)}
+                  className="bg-destructive text-white hover:bg-destructive/90 border-0"
+                >
+                  Stop & Send
+                </Button>
+              )}
+            </DialogFooter>
+          </>
+        )}
+
+        {step === "video" && (
+          <>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRecording(false);
+                    setStep("pick");
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  data-ocid="chats.new_note.video.back_button"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <DialogTitle className="font-display font-bold text-foreground">
+                  Video Note
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 py-1">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="video-to" className="text-sm font-medium">
+                  To
+                </Label>
+                <Input
+                  id="video-to"
+                  data-ocid="chats.new_note.video.to_input"
+                  placeholder="Contact name..."
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col items-center gap-4 py-4">
+                <button
+                  type="button"
+                  data-ocid="chats.new_note.video.primary_button"
+                  onClick={() =>
+                    recording ? stopRecording(true) : setRecording(true)
+                  }
+                  className="relative w-16 h-16 flex items-center justify-center"
+                >
+                  {recording && (
+                    <svg
+                      className="absolute inset-0 w-full h-full -rotate-90"
+                      viewBox="0 0 44 44"
+                    >
+                      <title>Recording progress</title>
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="none"
+                        stroke="oklch(var(--border))"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="none"
+                        stroke="oklch(var(--destructive))"
+                        strokeWidth="3"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={dash}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                      recording ? "bg-destructive" : "bg-purple-500"
+                    }`}
+                  >
+                    <Video className="w-7 h-7 text-white" />
+                  </div>
+                </button>
+                {recording ? (
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+                      transition={{
+                        repeat: Number.POSITIVE_INFINITY,
+                        duration: 0.8,
+                      }}
+                      className="w-2.5 h-2.5 rounded-full bg-destructive"
+                    />
+                    <span className="text-sm font-mono font-semibold text-foreground">
+                      {formatDuration(elapsed)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      / 0:30
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center">
+                    Tap the camera to start recording
+                    <br />
+                    (max 30 seconds)
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                data-ocid="chats.new_note.video.cancel_button"
+                onClick={handleClose}
+              >
+                Cancel
+              </Button>
+              {recording && (
+                <Button
+                  data-ocid="chats.new_note.video.stop_button"
+                  onClick={() => stopRecording(true)}
+                  className="bg-destructive text-white hover:bg-destructive/90 border-0"
+                >
+                  Stop & Send
+                </Button>
+              )}
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ChatsTab() {
   const { data: backendChats } = useGetChats();
   const [selectedChat, setSelectedChat] = useState<
     (typeof SAMPLE_CHATS)[0] | null
   >(null);
+  const [newMessageOpen, setNewMessageOpen] = useState(false);
 
   const chats =
     backendChats && backendChats.length > 0
@@ -545,13 +997,23 @@ export default function ChatsTab() {
       {/* Chat list */}
       <div className="flex flex-col h-full">
         <div className="px-4 py-3 border-b border-border">
-          <div className="relative">
-            <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              data-ocid="chats.search_input"
-              className="w-full pl-10 pr-4 py-2 bg-secondary rounded-xl text-sm text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:border-primary"
-              placeholder="Search conversations..."
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                data-ocid="chats.search_input"
+                className="w-full pl-10 pr-4 py-2 bg-secondary rounded-xl text-sm text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:border-primary"
+                placeholder="Search conversations..."
+              />
+            </div>
+            <button
+              type="button"
+              data-ocid="chats.new_message.open_modal_button"
+              onClick={() => setNewMessageOpen(true)}
+              className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all flex-shrink-0"
+            >
+              <Plus className="w-5 h-5 text-primary-foreground" />
+            </button>
           </div>
         </div>
 
@@ -600,6 +1062,25 @@ export default function ChatsTab() {
           />
         )}
       </AnimatePresence>
+
+      {/* FAB - New Note */}
+      {!selectedChat && (
+        <button
+          type="button"
+          data-ocid="chats.open_modal_button"
+          onClick={() => setNewMessageOpen(true)}
+          className="absolute bottom-4 right-4 w-14 h-14 rounded-full phoenix-gradient shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-all z-10"
+          aria-label="New message"
+        >
+          <Plus className="w-6 h-6 text-primary-foreground" />
+        </button>
+      )}
+
+      {/* New Note Dialog */}
+      <NewNoteDialog
+        open={newMessageOpen}
+        onClose={() => setNewMessageOpen(false)}
+      />
     </div>
   );
 }

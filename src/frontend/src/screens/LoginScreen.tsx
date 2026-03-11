@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Mail, Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import phonexLogo from "/assets/Phonex.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -67,8 +68,8 @@ export default function LoginScreen({
           className="flex flex-col items-center text-center"
         >
           <img
-            src="/assets/uploads/Phonex-1.jpg"
-            alt="Phoenix Logo"
+            src={phonexLogo}
+            alt="Phonex Logo"
             className="w-20 h-20 rounded-3xl object-cover shadow-lg mb-4"
           />
           <h1
@@ -78,7 +79,7 @@ export default function LoginScreen({
               textShadow: "0 1px 4px rgba(255,255,255,0.7)",
             }}
           >
-            Phoenix
+            Phonex
           </h1>
           <p className="text-primary-foreground/80 mt-1 font-body text-sm">
             Rise. Connect. Thrive.
