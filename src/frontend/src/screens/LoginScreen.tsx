@@ -71,7 +71,13 @@ export default function LoginScreen({
             alt="Phoenix Logo"
             className="w-20 h-20 rounded-3xl object-cover shadow-lg mb-4"
           />
-          <h1 className="font-display text-4xl font-black text-primary-foreground tracking-tight">
+          <h1
+            className="font-display text-4xl font-black tracking-tight"
+            style={{
+              color: "#0f2d6b",
+              textShadow: "0 1px 4px rgba(255,255,255,0.7)",
+            }}
+          >
             Phoenix
           </h1>
           <p className="text-primary-foreground/80 mt-1 font-body text-sm">

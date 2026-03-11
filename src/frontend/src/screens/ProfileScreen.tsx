@@ -1,10 +1,13 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
+  Building2,
+  Camera,
   Check,
+  CreditCard,
   Edit3,
   Globe,
   Mail,
@@ -13,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
@@ -23,15 +26,30 @@ interface Props {
 export default function ProfileScreen({ onBack }: Props) {
   const { currentUser, updateProfile } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     displayName: currentUser?.displayName || "",
     phone: currentUser?.phone || "",
     countryCode: currentUser?.countryCode || "+1",
+    bankName: "",
+    accountNumber: "",
   });
 
   const initials = currentUser?.displayName
     ? currentUser.displayName.slice(0, 2).toUpperCase()
     : currentUser?.email?.slice(0, 2).toUpperCase() || "?";
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result;
+      if (typeof result === "string") setAvatarUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = () => {
     updateProfile(form);
@@ -43,6 +61,8 @@ export default function ProfileScreen({ onBack }: Props) {
       displayName: currentUser?.displayName || "",
       phone: currentUser?.phone || "",
       countryCode: currentUser?.countryCode || "+1",
+      bankName: form.bankName,
+      accountNumber: form.accountNumber,
     });
     setEditing(false);
   };
@@ -77,12 +97,34 @@ export default function ProfileScreen({ onBack }: Props) {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", bounce: 0.4 }}
+            className="relative"
           >
             <Avatar className="w-24 h-24 border-4 border-white/40 shadow-xl">
+              {avatarUrl && (
+                <AvatarImage src={avatarUrl} alt="Profile picture" />
+              )}
               <AvatarFallback className="phoenix-gradient text-primary-foreground font-display font-black text-2xl">
                 {initials}
               </AvatarFallback>
             </Avatar>
+            {/* Camera button always visible */}
+            <button
+              type="button"
+              data-ocid="profile.upload_button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors border-2 border-white/60"
+              aria-label="Upload profile picture"
+            >
+              <Camera className="w-4 h-4 text-gray-700" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+              data-ocid="profile.dropzone"
+            />
           </motion.div>
           <h2 className="font-display font-bold text-xl text-primary-foreground mt-3">
             {currentUser?.displayName || "Phoenix User"}
@@ -144,6 +186,34 @@ export default function ProfileScreen({ onBack }: Props) {
               </div>
             </div>
 
+            <div className="space-y-1.5">
+              <Label className="text-foreground font-medium">Bank Name</Label>
+              <Input
+                data-ocid="profile.input"
+                value={form.bankName}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, bankName: e.target.value }))
+                }
+                className="bg-secondary border-border"
+                placeholder="e.g. Chase, Barclays"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground font-medium">
+                Account Number / IBAN
+              </Label>
+              <Input
+                data-ocid="profile.input"
+                value={form.accountNumber}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, accountNumber: e.target.value }))
+                }
+                className="bg-secondary border-border"
+                placeholder="GB29 NWBK 6016 1331 9268 19"
+              />
+            </div>
+
             <div className="flex gap-3 mt-2">
               <Button
                 data-ocid="profile.cancel_button"
@@ -191,6 +261,16 @@ export default function ProfileScreen({ onBack }: Props) {
                   icon: Globe,
                   label: "Country Code",
                   value: currentUser?.countryCode || "Not set",
+                },
+                {
+                  icon: Building2,
+                  label: "Bank Name",
+                  value: form.bankName || "Not set",
+                },
+                {
+                  icon: CreditCard,
+                  label: "Account / IBAN",
+                  value: form.accountNumber || "Not set",
                 },
               ].map(({ icon: Icon, label, value }) => (
                 <div

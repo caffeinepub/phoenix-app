@@ -1,21 +1,21 @@
 import {
-  BookOpen,
-  Briefcase,
   LogOut,
   Mail,
   MessageCircle,
   Moon,
+  Phone,
   Sun,
   User,
+  Wallet,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
+import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
-import ClassTab from "../tabs/ClassTab";
 import EmailTab from "../tabs/EmailTab";
-import JobsTab from "../tabs/JobsTab";
+import PocketTab from "../tabs/PocketTab";
 
 interface Props {
   onLogout: () => void;
@@ -24,9 +24,9 @@ interface Props {
 
 const TABS = [
   { id: "chats", label: "Chats", icon: MessageCircle },
-  { id: "class", label: "Class", icon: BookOpen },
+  { id: "calls", label: "Calls", icon: Phone },
   { id: "email", label: "Email", icon: Mail },
-  { id: "jobs", label: "Jobs", icon: Briefcase },
+  { id: "pocket", label: "Pocket", icon: Wallet },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -38,9 +38,9 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
 
   const tabContent: Record<TabId, React.ReactNode> = {
     chats: <ChatsTab />,
-    class: <ClassTab />,
+    calls: <CallsTab />,
     email: <EmailTab />,
-    jobs: <JobsTab />,
+    pocket: <PocketTab />,
   };
 
   return (
@@ -53,7 +53,13 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
               alt="Phoenix Logo"
               className="w-8 h-8 rounded-xl object-cover"
             />
-            <h1 className="font-display text-xl font-black text-primary-foreground tracking-tight">
+            <h1
+              className="font-display text-xl font-black tracking-tight"
+              style={{
+                color: "#0f2d6b",
+                textShadow: "0 1px 3px rgba(255,255,255,0.6)",
+              }}
+            >
               Phoenix
             </h1>
           </div>
