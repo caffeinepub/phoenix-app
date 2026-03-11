@@ -6,6 +6,8 @@ export interface UserData {
   countryCode: string;
   displayName: string;
   password: string;
+  bankName?: string;
+  ibanNumber?: string;
 }
 
 interface AuthContextType {

@@ -1,7 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Flame, Globe, Lock, Mail, Phone } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CreditCard,
+  Flame,
+  Globe,
+  Lock,
+  Mail,
+  Phone,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,6 +28,8 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
     countryCode: "+1",
     displayName: "",
     password: "",
+    bankName: "",
+    ibanNumber: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +39,13 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
 
   const handleRegister = async () => {
     setError("");
-    if (!form.email || !form.phone || !form.password) {
+    if (
+      !form.email ||
+      !form.phone ||
+      !form.password ||
+      !form.bankName ||
+      !form.ibanNumber
+    ) {
       setError("Please fill in all required fields");
       return;
     }
@@ -139,6 +156,52 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
                 className="pl-10 bg-secondary border-border"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Bank Details Section */}
+        <div className="flex items-center gap-3 pt-1">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+            Bank Details
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="reg-bank-name"
+            className="text-foreground font-medium"
+          >
+            Bank Name <span className="text-destructive">*</span>
+          </Label>
+          <div className="relative">
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="reg-bank-name"
+              data-ocid="register.input"
+              placeholder="e.g. Chase Bank, HSBC"
+              value={form.bankName}
+              onChange={(e) => update("bankName", e.target.value)}
+              className="pl-10 bg-secondary border-border"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="reg-iban" className="text-foreground font-medium">
+            Account / IBAN Number <span className="text-destructive">*</span>
+          </Label>
+          <div className="relative">
+            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="reg-iban"
+              data-ocid="register.input"
+              placeholder="e.g. GB29 NWBK 6016 1331 9268 19"
+              value={form.ibanNumber}
+              onChange={(e) => update("ibanNumber", e.target.value)}
+              className="pl-10 bg-secondary border-border font-mono text-sm tracking-wide"
+            />
           </div>
         </div>
 
