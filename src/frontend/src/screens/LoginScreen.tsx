@@ -28,7 +28,7 @@ export default function LoginScreen({
   const { login, forgotPassword } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("password");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -156,7 +156,7 @@ export default function LoginScreen({
                 id="password"
                 data-ocid="login.input"
                 type="password"
-                placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}

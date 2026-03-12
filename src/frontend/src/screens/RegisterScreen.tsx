@@ -34,7 +34,7 @@ export default function RegisterScreen({
     phone: "",
     countryCode: "+92",
     displayName: "",
-    password: "",
+    password: "password",
     bankName: "",
     ibanNumber: "",
   });

@@ -125,11 +125,25 @@
   ],
   "screenshots": [
     {
-      "src": "/assets/generated/screenshot-mobile.dim_390x844.png",
+      "src": "/assets/generated/screenshot-login.dim_390x844.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Phonex login screen"
+    },
+    {
+      "src": "/assets/generated/screenshot-chats.dim_390x844.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Phonex Chats tab with Text, Voice and Video Notes"
+    },
+    {
+      "src": "/assets/generated/screenshot-pocket.dim_390x844.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Phonex Pocket wallet with PKR balance"
     },
     {
       "src": "/assets/generated/screenshot-mobile-2.dim_390x844.png",

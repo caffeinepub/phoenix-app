@@ -34,10 +34,12 @@ export default function PrivacyPolicyScreen({
               Phonex Privacy Policy
             </p>
             <p>
-              Phonex ("we", "our", or "us") is committed to protecting your
-              privacy. This Privacy Policy explains how we collect, use,
-              disclose, and safeguard your information when you use the Phonex
-              application.
+              Phonex (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;)
+              is committed to protecting your privacy. This Privacy Policy
+              explains how we collect, use, disclose, and safeguard your
+              information when you use the Phonex application
+              (&ldquo;App&rdquo;). By using Phonex, you agree to the terms
+              described in this policy.
             </p>
           </div>
 
@@ -62,6 +64,7 @@ export default function PrivacyPolicyScreen({
                 Financial transaction history (payments, transfers, top-ups)
               </li>
               <li>Contact list information you choose to add</li>
+              <li>Device information and usage data for app improvement</li>
             </ul>
           </section>
 
@@ -77,13 +80,16 @@ export default function PrivacyPolicyScreen({
               <li>To deliver messages, emails, and status updates (Feels)</li>
               <li>To provide customer support and respond to inquiries</li>
               <li>To improve app functionality and user experience</li>
-              <li>To comply with legal and regulatory obligations</li>
+              <li>
+                To comply with legal and regulatory obligations in Pakistan
+              </li>
+              <li>To detect and prevent fraud and unauthorized transactions</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-foreground font-semibold mb-2">
-              3. Data Storage & Security
+              3. Data Storage &amp; Security
             </h2>
             <p className="mb-2">
               Your data is stored using a hybrid architecture:
@@ -111,6 +117,9 @@ export default function PrivacyPolicyScreen({
                 Every financial transaction requires a Secret Pocket Key you set
                 yourself
               </li>
+              <li>
+                Unique Payment IDs (PXP-XXXXXXXX) are auto-generated per user
+              </li>
             </ul>
           </section>
 
@@ -124,14 +133,19 @@ export default function PrivacyPolicyScreen({
               circumstances:
             </p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li>With your consent</li>
+              <li>With your explicit consent</li>
               <li>
-                To comply with legal obligations or law enforcement requests
+                To comply with legal obligations or valid law enforcement
+                requests
               </li>
               <li>To protect the rights and safety of Phonex users</li>
               <li>
                 With banking partners to facilitate external bank transfers
-                (only the minimum necessary data)
+                (minimum necessary data only)
+              </li>
+              <li>
+                With mobile network operators (Jazz, Telenor, Zong, Ufone,
+                Warid) for TopUp services
               </li>
             </ul>
           </section>
@@ -145,7 +159,10 @@ export default function PrivacyPolicyScreen({
               account details and transaction history. This data is:
             </p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li>Encrypted at rest and in transit</li>
+              <li>
+                Encrypted at rest and in transit using industry-standard
+                protocols
+              </li>
               <li>
                 Protected by multi-factor authentication (PIN + biometrics)
               </li>
@@ -154,6 +171,7 @@ export default function PrivacyPolicyScreen({
                 Retained for the minimum period required by Pakistani financial
                 regulations
               </li>
+              <li>Accessible only to you via your Secret Pocket Key</li>
             </ul>
           </section>
 
@@ -161,56 +179,96 @@ export default function PrivacyPolicyScreen({
             <h2 className="text-foreground font-semibold mb-2">
               6. Your Rights
             </h2>
-            <p>You have the right to:</p>
+            <p>
+              Under Pakistani data protection principles, you have the right to:
+            </p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
               <li>Access the personal data we hold about you</li>
-              <li>Request correction of inaccurate data</li>
+              <li>Request correction of inaccurate or outdated data</li>
               <li>
-                Delete your account and associated data via Profile &gt; Account
-                Settings &gt; Delete Account
+                Delete your account and all associated data via Profile &gt;
+                Account Settings &gt; Delete Account
               </li>
-              <li>Withdraw consent for non-essential data processing</li>
+              <li>
+                Withdraw consent for non-essential data processing at any time
+              </li>
+              <li>Export your transaction history and message records</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-foreground font-semibold mb-2">
-              7. Children's Privacy
+              7. Feels &amp; Media Content
+            </h2>
+            <p>Feels (video and picture statuses) you post are:</p>
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+              <li>
+                Visible to your contacts for 12 hours, then automatically
+                deleted
+              </li>
+              <li>Limited to 5 active Feels at a time per user</li>
+              <li>
+                Stored locally and on the ICP blockchain during their active
+                period
+              </li>
+              <li>Permanently removed after expiry with no backup retained</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-foreground font-semibold mb-2">
+              8. Children&apos;s Privacy
             </h2>
             <p>
               Phonex is not intended for children under the age of 13. We do not
               knowingly collect personal information from children under 13. If
               you believe a child has provided us with personal information,
-              please contact us immediately.
+              please contact us immediately so we can delete it.
             </p>
           </section>
 
           <section>
             <h2 className="text-foreground font-semibold mb-2">
-              8. Changes to This Policy
+              9. Changes to This Policy
             </h2>
             <p>
               We may update this Privacy Policy from time to time. We will
               notify you of any significant changes by updating the date at the
-              top of this page. Continued use of Phonex after changes
-              constitutes acceptance of the updated policy.
+              top of this page and, where appropriate, via an in-app
+              notification. Continued use of Phonex after changes constitutes
+              acceptance of the updated policy.
             </p>
           </section>
 
           <section>
             <h2 className="text-foreground font-semibold mb-2">
-              9. Contact Us
+              10. Contact Us
             </h2>
-            <p>
-              If you have questions or concerns about this Privacy Policy or our
-              data practices, please contact us through the Phonex app support
-              channel.
+            <p className="mb-2">
+              If you have questions, concerns, or requests regarding this
+              Privacy Policy or our data practices, please contact us:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <strong className="text-foreground">App:</strong> Use the in-app
+                support option in Profile &gt; Account Settings
+              </li>
+              <li>
+                <strong className="text-foreground">Developer:</strong> Phonex
+                Development Team
+              </li>
+              <li>
+                <strong className="text-foreground">Country:</strong> Pakistan
+              </li>
+            </ul>
+            <p className="mt-2">
+              We aim to respond to all privacy inquiries within 7 business days.
             </p>
           </section>
 
           <div className="pt-4 border-t">
             <p className="text-xs text-center text-muted-foreground">
-              &copy; 2026 Phonex. All rights reserved.
+              &copy; 2026 Phonex. All rights reserved. | Made in Pakistan
             </p>
           </div>
         </div>

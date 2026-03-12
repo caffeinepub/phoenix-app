@@ -1139,6 +1139,33 @@ export default function ChatsTab() {
         }))
       : SAMPLE_CHATS;
 
+  const noteActions = [
+    {
+      step: "text" as const,
+      Icon: MessageSquare,
+      label: "Text Note",
+      color: "bg-blue-500",
+      borderColor: "border-blue-400",
+      ocid: "chats.text_note.button",
+    },
+    {
+      step: "voice" as const,
+      Icon: Mic,
+      label: "Voice Note",
+      color: "bg-green-500",
+      borderColor: "border-green-400",
+      ocid: "chats.voice_note.button",
+    },
+    {
+      step: "video" as const,
+      Icon: Video,
+      label: "Video Note",
+      color: "bg-purple-500",
+      borderColor: "border-purple-400",
+      ocid: "chats.video_note.button",
+    },
+  ];
+
   return (
     <div className="flex flex-col h-full relative">
       {/* Chat list */}
@@ -1154,39 +1181,8 @@ export default function ChatsTab() {
             </span>
           </div>
 
-          {/* Note type pill buttons */}
-          <div className="flex gap-2 mb-2">
-            <button
-              type="button"
-              data-ocid="chats.text_note.button"
-              onClick={() => openNoteDialog("text")}
-              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all shadow-sm"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Text Note
-            </button>
-            <button
-              type="button"
-              data-ocid="chats.voice_note.button"
-              onClick={() => openNoteDialog("voice")}
-              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all shadow-sm"
-            >
-              <Mic className="w-3.5 h-3.5" />
-              Voice Note
-            </button>
-            <button
-              type="button"
-              data-ocid="chats.video_note.button"
-              onClick={() => openNoteDialog("video")}
-              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500 text-white hover:bg-purple-600 active:scale-95 transition-all shadow-sm"
-            >
-              <Video className="w-3.5 h-3.5" />
-              Video Note
-            </button>
-          </div>
-
           {/* Search bar + contacts button */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-3">
             <div className="relative flex-1">
               <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
@@ -1203,6 +1199,34 @@ export default function ChatsTab() {
             >
               <Users className="w-4 h-4 text-foreground" />
             </button>
+          </div>
+
+          {/* Note type circular dashed buttons — same spot as old New Chat */}
+          <div className="flex items-start justify-around">
+            {noteActions.map(
+              ({ step, Icon, label, color, borderColor, ocid }) => (
+                <button
+                  key={step}
+                  type="button"
+                  data-ocid={ocid}
+                  onClick={() => openNoteDialog(step)}
+                  className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+                >
+                  <div
+                    className={`w-14 h-14 rounded-full border-2 border-dashed ${borderColor} flex items-center justify-center hover:opacity-80 transition-opacity`}
+                  >
+                    <div
+                      className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shadow-sm`}
+                    >
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
+                    {label}
+                  </span>
+                </button>
+              ),
+            )}
           </div>
         </div>
 
