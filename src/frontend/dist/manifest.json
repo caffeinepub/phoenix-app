@@ -6,6 +6,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#0a1628",
   "theme_color": "#1e40af",
@@ -30,6 +31,13 @@
     }
   },
   "widgets": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "note_taking": {
+    "new_note_url": "/?tab=chats"
+  },
+  "scope_extensions": [],
   "icons": [
     {
       "src": "/assets/generated/phonex-icon-96.dim_96x96.png",
