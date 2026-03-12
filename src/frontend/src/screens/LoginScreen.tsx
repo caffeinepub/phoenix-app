@@ -17,11 +17,13 @@ import { useTheme } from "../contexts/ThemeContext";
 interface Props {
   onNavigateRegister: () => void;
   onLoginSuccess: () => void;
+  onPrivacyPolicy: () => void;
 }
 
 export default function LoginScreen({
   onNavigateRegister,
   onLoginSuccess,
+  onPrivacyPolicy,
 }: Props) {
   const { login, forgotPassword } = useAuth();
   const { toggleTheme, isDark } = useTheme();
@@ -30,7 +32,6 @@ export default function LoginScreen({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Forgot password dialog state
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState<"idle" | "done">("idle");
@@ -54,7 +55,6 @@ export default function LoginScreen({
 
   const handleForgotSubmit = () => {
     if (!forgotEmail.trim()) return;
-    // Always show success message regardless of whether email exists (security best practice)
     forgotPassword(forgotEmail.trim());
     setForgotStatus("done");
   };
@@ -207,9 +207,19 @@ export default function LoginScreen({
             Create Account
           </button>
         </div>
+
+        <div className="text-center pt-2">
+          <button
+            type="button"
+            data-ocid="login.privacy.link"
+            onClick={onPrivacyPolicy}
+            className="text-muted-foreground text-xs hover:underline"
+          >
+            Privacy Policy
+          </button>
+        </div>
       </motion.div>
 
-      {/* Forgot Password Dialog */}
       <Dialog open={forgotOpen} onOpenChange={handleForgotClose}>
         <DialogContent
           data-ocid="login.forgot_dialog"

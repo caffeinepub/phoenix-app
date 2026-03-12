@@ -20,6 +20,7 @@ import {
   Check,
   Copy,
   CreditCard,
+  FileText,
   Globe,
   LogOut,
   Mail,
@@ -38,9 +39,14 @@ import { useTheme } from "../contexts/ThemeContext";
 interface Props {
   onBack: () => void;
   onLogout: () => void;
+  onPrivacyPolicy: () => void;
 }
 
-export default function ProfileScreen({ onBack, onLogout }: Props) {
+export default function ProfileScreen({
+  onBack,
+  onLogout,
+  onPrivacyPolicy,
+}: Props) {
   const { currentUser, updateProfile, logout, deleteAccount } = useAuth();
   const { isDark, darkNameColor, setDarkNameColor } = useTheme();
   const [editing, setEditing] = useState(false);
@@ -144,7 +150,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
           )}
         </div>
 
-        {/* Avatar */}
         <div className="flex flex-col items-center gap-2 pb-6 pt-4">
           {editing ? (
             <AvatarPicker value={avatarUrl} onChange={setAvatarUrl} />
@@ -172,7 +177,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
         className="flex-1 -mt-6 bg-background rounded-t-3xl px-4 pt-6 pb-10 shadow-sm"
       >
         <div className="space-y-4">
-          {/* Payment ID */}
           {currentUser?.paymentId && (
             <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-1">
               <p className="text-xs font-semibold text-primary uppercase tracking-widest flex items-center gap-1.5">
@@ -202,7 +206,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </div>
           )}
 
-          {/* Display Name */}
           <div className="space-y-1.5">
             <Label className="text-foreground font-semibold">Full Name</Label>
             {editing ? (
@@ -221,7 +224,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             )}
           </div>
 
-          {/* Email */}
           <div className="space-y-1.5">
             <Label className="text-foreground font-semibold flex items-center gap-1">
               <Mail className="w-3 h-3" /> Email
@@ -231,7 +233,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </p>
           </div>
 
-          {/* Phone */}
           <div className="space-y-1.5">
             <Label className="text-foreground font-semibold flex items-center gap-1">
               <Phone className="w-3 h-3" /> Phone
@@ -266,7 +267,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             )}
           </div>
 
-          {/* Bank section */}
           <div className="border-t border-border pt-4 space-y-4">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
@@ -320,7 +320,6 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </div>
           </div>
 
-          {/* Dark Mode App Name Color */}
           {isDark && (
             <div className="border-t border-border pt-4 space-y-3">
               <p className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -357,12 +356,22 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
             </div>
           )}
 
-          {/* Account Settings */}
           <div className="border-t border-border pt-4 space-y-3">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Settings className="w-4 h-4 text-primary" />
               Account Settings
             </p>
+
+            <Button
+              type="button"
+              data-ocid="profile.privacy.button"
+              variant="outline"
+              className="w-full flex items-center gap-2 justify-start text-foreground border-border hover:bg-muted/60"
+              onClick={onPrivacyPolicy}
+            >
+              <FileText className="w-4 h-4 text-primary" />
+              Privacy Policy
+            </Button>
 
             <Button
               type="button"

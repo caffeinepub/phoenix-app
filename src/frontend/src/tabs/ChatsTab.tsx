@@ -606,8 +606,9 @@ type NotePickerStep = "pick" | "text" | "voice" | "video";
 function NewNoteDialog({
   open,
   onClose,
-}: { open: boolean; onClose: () => void }) {
-  const [step, setStep] = useState<NotePickerStep>("pick");
+  initialStep = "pick",
+}: { open: boolean; onClose: () => void; initialStep?: NotePickerStep }) {
+  const [step, setStep] = useState<NotePickerStep>(initialStep);
   const [to, setTo] = useState("");
   const [contactPickerOpen, setContactPickerOpen] = useState(false);
   const [textBody, setTextBody] = useState("");
@@ -615,6 +616,13 @@ function NewNoteDialog({
   const [elapsed, setElapsed] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // When dialog opens, jump to the requested initial step
+  useEffect(() => {
+    if (open) {
+      setStep(initialStep);
+    }
+  }, [open, initialStep]);
 
   function reset() {
     setStep("pick");
@@ -1113,7 +1121,14 @@ export default function ChatsTab() {
     (typeof SAMPLE_CHATS)[0] | null
   >(null);
   const [newMessageOpen, setNewMessageOpen] = useState(false);
+  const [noteInitialStep, setNoteInitialStep] =
+    useState<NotePickerStep>("pick");
   const [contactsSheetOpen, setContactsSheetOpen] = useState(false);
+
+  function openNoteDialog(step: NotePickerStep) {
+    setNoteInitialStep(step);
+    setNewMessageOpen(true);
+  }
 
   const chats =
     backendChats && backendChats.length > 0
@@ -1129,6 +1144,7 @@ export default function ChatsTab() {
       {/* Chat list */}
       <div className="flex flex-col h-full">
         <div className="px-4 py-3 border-b border-border">
+          {/* Top row: Messages label + E2E badge */}
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-foreground">
               Messages
@@ -1137,6 +1153,39 @@ export default function ChatsTab() {
               🔒 End-to-End Encrypted
             </span>
           </div>
+
+          {/* Note type pill buttons */}
+          <div className="flex gap-2 mb-2">
+            <button
+              type="button"
+              data-ocid="chats.text_note.button"
+              onClick={() => openNoteDialog("text")}
+              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-500 text-white hover:bg-blue-600 active:scale-95 transition-all shadow-sm"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Text Note
+            </button>
+            <button
+              type="button"
+              data-ocid="chats.voice_note.button"
+              onClick={() => openNoteDialog("voice")}
+              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white hover:bg-green-600 active:scale-95 transition-all shadow-sm"
+            >
+              <Mic className="w-3.5 h-3.5" />
+              Voice Note
+            </button>
+            <button
+              type="button"
+              data-ocid="chats.video_note.button"
+              onClick={() => openNoteDialog("video")}
+              className="flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-500 text-white hover:bg-purple-600 active:scale-95 transition-all shadow-sm"
+            >
+              <Video className="w-3.5 h-3.5" />
+              Video Note
+            </button>
+          </div>
+
+          {/* Search bar + contacts button */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1154,21 +1203,6 @@ export default function ChatsTab() {
             >
               <Users className="w-4 h-4 text-foreground" />
             </button>
-          </div>
-        </div>
-
-        {/* Add Chat row - Feels style */}
-        <div className="flex gap-3 overflow-x-auto px-4 py-3 scrollbar-hide border-b border-border/50">
-          <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-            <button
-              type="button"
-              data-ocid="chats.add.button"
-              onClick={() => setNewMessageOpen(true)}
-              className="w-14 h-14 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors"
-            >
-              <Plus className="w-6 h-6 text-primary" />
-            </button>
-            <span className="text-[10px] text-muted-foreground">New Chat</span>
           </div>
         </div>
 
@@ -1222,6 +1256,7 @@ export default function ChatsTab() {
       <NewNoteDialog
         open={newMessageOpen}
         onClose={() => setNewMessageOpen(false)}
+        initialStep={noteInitialStep}
       />
 
       {/* Contacts Sheet */}
@@ -1269,7 +1304,7 @@ export default function ChatsTab() {
                   data-ocid={`chats.contact.select_button.${idx + 1}`}
                   onClick={() => {
                     setContactsSheetOpen(false);
-                    setNewMessageOpen(true);
+                    openNoteDialog("text");
                   }}
                   className="phoenix-gradient text-primary-foreground border-0 hover:opacity-90 text-xs px-3 h-8 flex-shrink-0"
                 >

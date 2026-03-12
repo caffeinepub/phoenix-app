@@ -6,7 +6,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": ["tabbed", "window-controls-overlay", "standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#0a1628",
   "theme_color": "#1e40af",
@@ -19,18 +19,50 @@
   "launch_handler": {
     "client_mode": "auto"
   },
-  "file_handlers": [],
-  "protocol_handlers": [],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
+        "video/*": [".mp4", ".webm"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+phonex",
+      "url": "/?action=%s"
+    }
+  ],
   "share_target": {
-    "action": "/share",
-    "method": "GET",
+    "action": "/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "media",
+          "accept": ["image/*", "video/*"]
+        }
+      ]
     }
   },
-  "widgets": [],
+  "widgets": [
+    {
+      "name": "Phonex Quick Actions",
+      "tag": "phonex-quick",
+      "ms_ac_template": "/widgets/template.json",
+      "data": "/widgets/data.json",
+      "description": "Quick access to Phonex chats and wallet",
+      "screenshots": [],
+      "icons": [
+        { "src": "/assets/generated/phonex-icon-192.dim_192x192.png", "sizes": "192x192" }
+      ]
+    }
+  ],
   "edge_side_panel": {
     "preferred_width": 400
   },
@@ -38,6 +70,11 @@
     "new_note_url": "/?tab=chats"
   },
   "scope_extensions": [],
+  "tab_strip": {
+    "home_tab": {
+      "url": "/"
+    }
+  },
   "icons": [
     {
       "src": "/assets/generated/phonex-icon-96.dim_96x96.png",
@@ -89,6 +126,13 @@
   "screenshots": [
     {
       "src": "/assets/generated/screenshot-mobile.dim_390x844.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Phonex login screen"
+    },
+    {
+      "src": "/assets/generated/screenshot-mobile-2.dim_390x844.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",

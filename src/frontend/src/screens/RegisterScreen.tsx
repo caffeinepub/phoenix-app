@@ -19,15 +19,20 @@ import { useAuth } from "../contexts/AuthContext";
 interface Props {
   onBack: () => void;
   onRegisterSuccess: () => void;
+  onPrivacyPolicy: () => void;
 }
 
-export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
+export default function RegisterScreen({
+  onBack,
+  onRegisterSuccess,
+  onPrivacyPolicy,
+}: Props) {
   const { register } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     email: "",
     phone: "",
-    countryCode: "+1",
+    countryCode: "+92",
     displayName: "",
     password: "",
     bankName: "",
@@ -87,7 +92,7 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
               Create Account
             </h1>
             <p className="text-primary-foreground/75 text-sm">
-              Join Phoenix today
+              Join Phonex today
             </p>
           </div>
         </div>
@@ -99,7 +104,6 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
         transition={{ duration: 0.4 }}
         className="flex-1 bg-background rounded-t-3xl -mt-4 px-6 pt-8 pb-8 flex flex-col gap-5"
       >
-        {/* Avatar picker section */}
         <div className="bg-muted/30 rounded-2xl p-4">
           <p className="text-sm font-semibold text-foreground mb-3 text-center">
             Profile Picture
@@ -203,7 +207,7 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
               <Input
                 id="bankName"
                 data-ocid="register.bank.input"
-                placeholder="e.g. Standard Chartered"
+                placeholder="e.g. HBL, MCB, Meezan Bank"
                 className="pl-9"
                 value={form.bankName}
                 onChange={(e) => update("bankName", e.target.value)}
@@ -247,8 +251,20 @@ export default function RegisterScreen({ onBack, onRegisterSuccess }: Props) {
           disabled={isLoading}
           className="w-full h-12 text-base font-bold rounded-2xl mt-2"
         >
-          {isLoading ? "Creating account…" : "Create Account"}
+          {isLoading ? "Creating account..." : "Create Account"}
         </Button>
+
+        <p className="text-center text-xs text-muted-foreground">
+          By creating an account, you agree to our{" "}
+          <button
+            type="button"
+            data-ocid="register.privacy.link"
+            onClick={onPrivacyPolicy}
+            className="text-primary hover:underline"
+          >
+            Privacy Policy
+          </button>
+        </p>
       </motion.div>
     </div>
   );
