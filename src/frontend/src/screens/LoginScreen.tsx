@@ -1,10 +1,17 @@
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Mail, Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
-const phonexLogo = "/assets/uploads/Phonex-Icon-1.jpg";
+const phonexLogo =
+  "/assets/generated/phonex-phoenix-logo-transparent.dim_512x512.png";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -17,12 +24,17 @@ export default function LoginScreen({
   onNavigateRegister,
   onLoginSuccess,
 }: Props) {
-  const { login } = useAuth();
+  const { login, forgotPassword } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Forgot password dialog state
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStatus, setForgotStatus] = useState<"idle" | "done">("idle");
 
   const handleLogin = async () => {
     setError("");
@@ -39,6 +51,19 @@ export default function LoginScreen({
     } else {
       setError("Invalid email or password");
     }
+  };
+
+  const handleForgotSubmit = () => {
+    if (!forgotEmail.trim()) return;
+    // Always show success message regardless of whether email exists (security best practice)
+    forgotPassword(forgotEmail.trim());
+    setForgotStatus("done");
+  };
+
+  const handleForgotClose = () => {
+    setForgotOpen(false);
+    setForgotEmail("");
+    setForgotStatus("idle");
   };
 
   return (
@@ -70,7 +95,7 @@ export default function LoginScreen({
           <img
             src={phonexLogo}
             alt="Phonex Logo"
-            className="w-20 h-20 rounded-3xl object-cover shadow-lg mb-4"
+            className="w-20 h-20 object-contain drop-shadow-lg mb-4"
           />
           <h1
             className="font-display text-4xl font-black tracking-tight"
@@ -138,6 +163,16 @@ export default function LoginScreen({
                 className="pl-10 bg-secondary border-border focus:border-primary"
               />
             </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                data-ocid="login.forgot_password.button"
+                onClick={() => setForgotOpen(true)}
+                className="text-primary text-xs font-medium hover:underline mt-1"
+              >
+                Forgot Password?
+              </button>
+            </div>
           </div>
 
           {error && (
@@ -173,6 +208,77 @@ export default function LoginScreen({
           </button>
         </div>
       </motion.div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={forgotOpen} onOpenChange={handleForgotClose}>
+        <DialogContent
+          data-ocid="login.forgot_dialog"
+          className="max-w-sm mx-4 rounded-2xl"
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg">
+              Reset Password
+            </DialogTitle>
+          </DialogHeader>
+
+          {forgotStatus === "done" ? (
+            <div className="py-2 space-y-4">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                If this email is registered, your password has been reset to
+                your phone number. Please login and update it in Profile.
+              </p>
+              <Button
+                data-ocid="login.forgot_dialog.close_button"
+                onClick={handleForgotClose}
+                className="w-full phoenix-gradient text-primary-foreground border-0 rounded-xl"
+              >
+                Got it
+              </Button>
+            </div>
+          ) : (
+            <div className="py-2 space-y-4">
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="forgot-email"
+                  className="text-foreground font-medium text-sm"
+                >
+                  Email Address
+                </Label>
+                <Input
+                  id="forgot-email"
+                  data-ocid="login.forgot_email.input"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleForgotSubmit()}
+                  className="bg-secondary border-border focus:border-primary"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  data-ocid="login.forgot_dialog.cancel_button"
+                  variant="outline"
+                  onClick={handleForgotClose}
+                  className="flex-1 rounded-xl"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  data-ocid="login.forgot_submit.button"
+                  onClick={handleForgotSubmit}
+                  disabled={!forgotEmail.trim()}
+                  className="flex-1 phoenix-gradient text-primary-foreground border-0 rounded-xl"
+                >
+                  Reset Password
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-const phonexLogo = "/assets/uploads/Phonex-Icon-1.jpg";
+const phonexLogo =
+  "/assets/generated/phonex-phoenix-logo-transparent.dim_512x512.png";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import CallsTab from "../tabs/CallsTab";
@@ -56,7 +57,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
             <img
               src={phonexLogo}
               alt="Phonex Logo"
-              className="w-8 h-8 rounded-xl object-cover"
+              className="w-8 h-8 object-contain drop-shadow-md"
             />
             <h1
               className="font-display text-xl font-black tracking-tight"

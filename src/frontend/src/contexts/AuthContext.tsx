@@ -1,9 +1,11 @@
 import {
   deleteUserAccount,
   generatePaymentId,
+  getAllUsers,
   getUser,
   loginUser,
   registerUser,
+  resetPassword,
   updateUser,
 } from "@/services/PhonexDB";
 import type { PhonexUser } from "@/services/PhonexDB";
@@ -29,6 +31,7 @@ interface AuthContextType {
   logout: () => void;
   deleteAccount: () => void;
   updateProfile: (data: Partial<UserData>) => void;
+  forgotPassword: (email: string) => boolean;
   // also expose paymentId helper
   paymentId: string | null;
 }
@@ -134,6 +137,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  /**
+   * Reset password to the user's phone number.
+   * Returns true if a matching account was found.
+   */
+  const forgotPassword = (email: string): boolean => {
+    const users = getAllUsers();
+    const user = users.find((u) => u.email === email);
+    if (!user) return false;
+    // Reset password to the user's phone number
+    return resetPassword(email, user.phone);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -143,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         deleteAccount,
         updateProfile,
+        forgotPassword,
         paymentId: currentUser?.paymentId ?? null,
       }}
     >

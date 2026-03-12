@@ -1,0 +1,17 @@
+{
+  "name": "Phonex",
+  "short_name": "Phonex",
+  "description": "Rise. Connect. Thrive.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4ade80",
+  "icons": [
+    {
+      "src": "/assets/generated/phonex-phoenix-logo-transparent.dim_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

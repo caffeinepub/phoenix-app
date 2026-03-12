@@ -154,6 +154,17 @@ export function deleteUserAccount(paymentId: string): void {
   );
 }
 
+/**
+ * Reset a user's password by email. Returns true if the user was found and updated.
+ */
+export function resetPassword(email: string, newPassword: string): boolean {
+  const users = read<PhonexUser[]>(KEYS.users, []);
+  const user = users.find((u) => u.email === email);
+  if (!user) return false;
+  updateUser(user.paymentId, { password: newPassword });
+  return true;
+}
+
 // ── Balance ───────────────────────────────────────────────────────────────────
 export function getBalance(paymentId: string): number {
   return read<number>(KEYS.balance(paymentId), 100000);

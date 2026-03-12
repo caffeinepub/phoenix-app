@@ -1144,14 +1144,6 @@ export default function ChatsTab() {
             >
               <Users className="w-4 h-4 text-foreground" />
             </button>
-            <button
-              type="button"
-              data-ocid="chats.new_message.open_modal_button"
-              onClick={() => setNewMessageOpen(true)}
-              className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all flex-shrink-0"
-            >
-              <Plus className="w-5 h-5 text-primary-foreground" />
-            </button>
           </div>
         </div>
 
