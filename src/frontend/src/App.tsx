@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SyncProvider } from "./contexts/SyncContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import HomeScreen from "./screens/HomeScreen";
 import LoginScreen from "./screens/LoginScreen";
@@ -48,7 +49,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppInner />
+        <SyncProvider>
+          <AppInner />
+        </SyncProvider>
       </AuthProvider>
     </ThemeProvider>
   );

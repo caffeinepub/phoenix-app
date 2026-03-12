@@ -25,6 +25,13 @@ import {
   setBalance,
 } from "@/services/PhonexDB";
 import {
+  getSecretKey,
+  hasSecretKey,
+  isValidFormat,
+  setSecretKey,
+  validateSecretKey,
+} from "@/services/secretKey";
+import {
   ArrowRight,
   Building2,
   Check,
@@ -47,10 +54,12 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function generatePocketKey(): string {
+// biome-ignore lint/correctness/noUnusedVariables: used in key setup suggestion
+function generateRandomKey(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
   for (let i = 0; i < 4; i++) {
@@ -373,12 +382,19 @@ interface TopUpModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (tx: Transaction) => void;
+  validateKey: (input: string) => boolean;
 }
 
-function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
+function TopUpModal({
+  open,
+  onClose,
+  onSuccess,
+  validateKey,
+}: TopUpModalProps) {
   const [operator, setOperator] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [amount, setAmount] = useState("");
+  const [topupKey, setTopupKey] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -386,6 +402,7 @@ function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
     setOperator("");
     setMobileNumber("");
     setAmount("");
+    setTopupKey("");
     setSubmitting(false);
     setSuccess(false);
   }
@@ -413,6 +430,7 @@ function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
     };
     setSubmitting(false);
     setSuccess(true);
+    toast.success("TopUp successful! 📱");
     setTimeout(() => {
       onSuccess(tx);
       resetAll();
@@ -421,7 +439,11 @@ function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
   }
 
   const canSubmit =
-    operator.length > 0 && mobileNumber.length >= 10 && amount.length > 0;
+    operator.length > 0 &&
+    mobileNumber.length >= 10 &&
+    amount.length > 0 &&
+    topupKey.length === 4 &&
+    validateKey(topupKey);
 
   return (
     <Dialog
@@ -522,6 +544,21 @@ function TopUpModal({ open, onClose, onSuccess }: TopUpModalProps) {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <Label className="font-semibold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                  Secret Pocket Key
+                </Label>
+                <Input
+                  data-ocid="topup.pocketkey.input"
+                  maxLength={4}
+                  placeholder="4-character key"
+                  value={topupKey}
+                  onChange={(e) => setTopupKey(e.target.value.toUpperCase())}
+                  className="tracking-[0.3em] font-mono text-center uppercase"
+                />
+              </div>
+
               <Button
                 data-ocid="topup.submit_button"
                 onClick={handleSubmit}
@@ -552,9 +589,10 @@ interface SendModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (tx: Transaction) => void;
+  validateKey: (input: string) => boolean;
 }
 
-function SendModal({ open, onClose, onSuccess }: SendModalProps) {
+function SendModal({ open, onClose, onSuccess, validateKey }: SendModalProps) {
   const [step, setStep] = useState<SendStep>("choose");
   const [recipientId, setRecipientId] = useState("");
   const [amountA, setAmountA] = useState("");
@@ -618,6 +656,7 @@ function SendModal({ open, onClose, onSuccess }: SendModalProps) {
       isNew: true,
     };
     setSubmitted(true);
+    toast.success("Payment sent successfully! 💸");
     setTimeout(() => {
       onSuccess(tx);
       resetAll();
@@ -632,7 +671,8 @@ function SendModal({ open, onClose, onSuccess }: SendModalProps) {
     ibanNumber.length > 4 &&
     amountB.length > 0;
   const canVerify = step === "phonex" ? canVerifyPhonex : canVerifyExternal;
-  const canSend = !!verifiedName && pocketKey.length === 4;
+  const canSend =
+    !!verifiedName && pocketKey.length === 4 && validateKey(pocketKey);
 
   return (
     <Dialog
@@ -832,7 +872,7 @@ function SendModal({ open, onClose, onSuccess }: SendModalProps) {
                     className="tracking-[0.3em] font-mono text-center uppercase"
                   />
                   <p className="text-[10px] text-muted-foreground text-center">
-                    Enter your system-generated 4-character Secret Pocket Key
+                    Enter your 4-character Secret Pocket Key to authorize
                   </p>
                 </div>
               )}
@@ -1322,7 +1362,49 @@ function PinLockScreen({
 export default function PocketTab() {
   const { currentUser } = useAuth();
   const paymentId = currentUser?.paymentId ?? "PXP-XXXXXXXX";
-  const pocketKey = useMemo(() => generatePocketKey(), []);
+  const [setupKeyOpen, setSetupKeyOpen] = useState(false);
+  const [setupKeyInput, setSetupKeyInput] = useState("");
+  const [setupKeyError, setSetupKeyError] = useState("");
+  const [changeKeyOpen, setChangeKeyOpen] = useState(false);
+  const [changeKeyInput, setChangeKeyInput] = useState("");
+  const [changeKeyError, setChangeKeyError] = useState("");
+
+  const userId = currentUser?.paymentId ?? "guest";
+  const storedKey = getSecretKey(userId);
+  const [keySetup, setKeySetup] = useState(() => hasSecretKey(userId));
+
+  const validateKey = (input: string) => validateSecretKey(userId, input);
+
+  function handleSetupKey() {
+    const k = setupKeyInput
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 4);
+    if (!isValidFormat(k)) {
+      setSetupKeyError("Must be exactly 4 alphanumeric characters (A-Z, 0-9)");
+      return;
+    }
+    setSecretKey(userId, k);
+    setKeySetup(true);
+    setSetupKeyOpen(false);
+    setSetupKeyInput("");
+    setSetupKeyError("");
+  }
+
+  function handleChangeKey() {
+    const k = changeKeyInput
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 4);
+    if (!isValidFormat(k)) {
+      setChangeKeyError("Must be exactly 4 alphanumeric characters (A-Z, 0-9)");
+      return;
+    }
+    setSecretKey(userId, k);
+    setChangeKeyOpen(false);
+    setChangeKeyInput("");
+    setChangeKeyError("");
+  }
   const [keyVisible, setKeyVisible] = useState(false);
   // PIN lock state
   const [pinUnlocked, setPinUnlocked] = useState(false);
@@ -1490,7 +1572,13 @@ export default function PocketTab() {
       icon: Send,
       color: "text-primary",
       bg: "bg-primary/10",
-      onClick: () => setSendOpen(true),
+      onClick: () => {
+        if (!keySetup) {
+          setSetupKeyOpen(true);
+        } else {
+          setSendOpen(true);
+        }
+      },
       ocid: "pocket.send.button",
     },
     {
@@ -1506,7 +1594,13 @@ export default function PocketTab() {
       icon: Plus,
       color: "text-violet-600",
       bg: "bg-violet-500/10",
-      onClick: () => setTopUpOpen(true),
+      onClick: () => {
+        if (!keySetup) {
+          setSetupKeyOpen(true);
+        } else {
+          setTopUpOpen(true);
+        }
+      },
       ocid: "pocket.topup.button",
     },
     {
@@ -1586,7 +1680,7 @@ export default function PocketTab() {
               {keyVisible ? (
                 <>
                   <EyeOff className="w-3 h-3" />
-                  KEY: {pocketKey}
+                  KEY: {storedKey ?? "NOT SET"}
                 </>
               ) : (
                 <>
@@ -1606,6 +1700,15 @@ export default function PocketTab() {
             >
               <Lock className="w-3 h-3" />
               Change PIN
+            </button>
+            <button
+              type="button"
+              data-ocid="pocket.change_key.button"
+              onClick={() => setChangeKeyOpen(true)}
+              className="flex items-center gap-1 bg-white/15 text-white border-0 text-[10px] rounded-full px-2 py-0.5 hover:bg-white/25 transition-colors"
+            >
+              <KeyRound className="w-3 h-3" />
+              Change Key
             </button>
             {BIOMETRIC_SUPPORTED && (
               <button
@@ -1777,6 +1880,7 @@ export default function PocketTab() {
         open={sendOpen}
         onClose={() => setSendOpen(false)}
         onSuccess={handleSendSuccess}
+        validateKey={validateKey}
       />
       <ReceiveModal
         open={receiveOpen}
@@ -1787,12 +1891,134 @@ export default function PocketTab() {
         open={topUpOpen}
         onClose={() => setTopUpOpen(false)}
         onSuccess={handleTopUpSuccess}
+        validateKey={validateKey}
       />
       <ReceiptDialog
         tx={receiptTx}
         open={receiptOpen}
         onClose={() => setReceiptOpen(false)}
       />
+
+      {/* Secret Key Setup Dialog */}
+      <Dialog
+        open={setupKeyOpen}
+        onOpenChange={(v) => {
+          if (!v) {
+            setSetupKeyOpen(false);
+            setSetupKeyInput("");
+            setSetupKeyError("");
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-xs"
+          data-ocid="pocket.setup_key.dialog"
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-primary" />
+              Set Your Secret Pocket Key
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Choose a 4-character alphanumeric code (A-Z, 0-9) you'll remember.
+              You'll need this for every transaction.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Secret Key</Label>
+              <Input
+                data-ocid="pocket.setup_key.input"
+                maxLength={4}
+                placeholder="e.g. A1B2"
+                value={setupKeyInput}
+                onChange={(e) => {
+                  setSetupKeyInput(
+                    e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+                  );
+                  setSetupKeyError("");
+                }}
+                className="tracking-[0.3em] font-mono text-center text-lg uppercase"
+              />
+              {setupKeyError && (
+                <p
+                  className="text-xs text-destructive"
+                  data-ocid="pocket.setup_key.error_state"
+                >
+                  {setupKeyError}
+                </p>
+              )}
+            </div>
+            <Button
+              data-ocid="pocket.setup_key.submit_button"
+              onClick={handleSetupKey}
+              className="w-full"
+              disabled={setupKeyInput.length !== 4}
+            >
+              <ShieldCheck className="w-4 h-4 mr-1.5" />
+              Set Secret Key
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Secret Key Dialog */}
+      <Dialog
+        open={changeKeyOpen}
+        onOpenChange={(v) => {
+          if (!v) {
+            setChangeKeyOpen(false);
+            setChangeKeyInput("");
+            setChangeKeyError("");
+          }
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-xs"
+          data-ocid="pocket.change_key.dialog"
+        >
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-primary" />
+              Change Secret Key
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">New Secret Key</Label>
+              <Input
+                data-ocid="pocket.change_key.input"
+                maxLength={4}
+                placeholder="4 chars (A-Z, 0-9)"
+                value={changeKeyInput}
+                onChange={(e) => {
+                  setChangeKeyInput(
+                    e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+                  );
+                  setChangeKeyError("");
+                }}
+                className="tracking-[0.3em] font-mono text-center text-lg uppercase"
+              />
+              {changeKeyError && (
+                <p
+                  className="text-xs text-destructive"
+                  data-ocid="pocket.change_key.error_state"
+                >
+                  {changeKeyError}
+                </p>
+              )}
+            </div>
+            <Button
+              data-ocid="pocket.change_key.submit_button"
+              onClick={handleChangeKey}
+              className="w-full"
+              disabled={changeKeyInput.length !== 4}
+            >
+              Save New Key
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

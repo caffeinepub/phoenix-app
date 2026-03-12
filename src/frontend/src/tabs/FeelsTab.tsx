@@ -16,6 +16,7 @@ import {
 import { ImageIcon, Plus, Sparkles, Video, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type Category = "happy" | "sad" | "travel" | "work" | "shopping";
 
@@ -336,6 +337,7 @@ export default function FeelsTab() {
     setMediaUrl(undefined);
     setMediaType(undefined);
     setSheetOpen(false);
+    toast.success("Feel posted! ✨");
     // Auto-open the viewer right after adding
     setViewingFeel(newFeel);
   }
@@ -466,6 +468,7 @@ export default function FeelsTab() {
                             setFeels((prev) =>
                               prev.filter((f) => f.id !== feel.id),
                             );
+                            toast.success("Feel removed");
                           }}
                           className="w-5 h-5 rounded-full hover:bg-black/10 flex items-center justify-center transition-colors"
                           aria-label="Remove feel"
@@ -529,6 +532,7 @@ export default function FeelsTab() {
             {/* Caption */}
             <Input
               data-ocid="feels.caption.input"
+              autoFocus
               placeholder="Add a caption…"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}

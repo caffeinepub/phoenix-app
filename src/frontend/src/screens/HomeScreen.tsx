@@ -1,4 +1,15 @@
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Code2,
   LogOut,
   Mail,
   MessageCircle,
@@ -11,12 +22,13 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-const phonexLogo =
-  "/assets/generated/phonex-phoenix-logo-transparent.dim_512x512.png";
+const phonexLogo = "/assets/uploads/Phonex-Icon-1-1.jpg";
 import { useAuth } from "../contexts/AuthContext";
+import { useSyncStatus } from "../contexts/SyncContext";
 import { useTheme } from "../contexts/ThemeContext";
 import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
+import CodingTab from "../tabs/CodingTab";
 import EmailTab from "../tabs/EmailTab";
 import FeelsTab from "../tabs/FeelsTab";
 import PocketTab from "../tabs/PocketTab";
@@ -32,12 +44,48 @@ const TABS = [
   { id: "email", label: "Email", icon: Mail },
   { id: "pocket", label: "Pocket", icon: Wallet },
   { id: "calls", label: "Calls", icon: Phone },
+  { id: "coding", label: "Coding", icon: Code2 },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
+function SyncBadge() {
+  const { syncStatus, lastSync } = useSyncStatus();
+  const labels: Record<string, string> = {
+    synced: "Cloud Synced",
+    syncing: "Syncing...",
+    offline: "Offline",
+    error: "Sync Error",
+  };
+  const colors: Record<string, string> = {
+    synced: "bg-green-400",
+    syncing: "bg-yellow-400",
+    offline: "bg-gray-400",
+    error: "bg-red-400",
+  };
+  return (
+    <span
+      data-ocid="home.sync_status.button"
+      title={
+        lastSync
+          ? `Last synced: ${new Date(lastSync).toLocaleTimeString()}`
+          : labels[syncStatus]
+      }
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium text-white ${colors[syncStatus]}`}
+    >
+      <span
+        className={`w-1.5 h-1.5 rounded-full bg-white/80 ${
+          syncStatus === "syncing" ? "animate-pulse" : ""
+        }`}
+      />
+      {labels[syncStatus]}
+    </span>
+  );
+}
+
 export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("chats");
+  const [logoutOpen, setLogoutOpen] = useState(false);
   const { currentUser } = useAuth();
   const { toggleTheme, isDark, darkNameColor } = useTheme();
 
@@ -47,31 +95,37 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
     calls: <CallsTab />,
     email: <EmailTab />,
     pocket: <PocketTab />,
+    coding: <CodingTab />,
   };
 
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="phoenix-gradient px-4 shadow-lg">
         <div className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-2">
-            <img
-              src={phonexLogo}
-              alt="Phonex Logo"
-              className="w-8 h-8 object-contain drop-shadow-md"
-            />
-            <h1
-              className="font-display text-xl font-black tracking-tight"
-              style={{
-                color: isDark
-                  ? darkNameColor === "maroon"
-                    ? "#800000"
-                    : "#ffffff"
-                  : "#0f2d6b",
-                textShadow: "0 1px 3px rgba(255,255,255,0.6)",
-              }}
-            >
-              Phonex
-            </h1>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <img
+                src={phonexLogo}
+                alt="Phonex Logo"
+                className="w-8 h-8 object-contain drop-shadow-md rounded-full"
+              />
+              <h1
+                className="font-display text-xl font-black tracking-tight"
+                style={{
+                  color: isDark
+                    ? darkNameColor === "maroon"
+                      ? "#800000"
+                      : "#ffffff"
+                    : "#0f2d6b",
+                  textShadow: "0 1px 3px rgba(255,255,255,0.6)",
+                }}
+              >
+                Phonex
+              </h1>
+            </div>
+            <div className="ml-10">
+              <SyncBadge />
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -110,7 +164,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
             <button
               type="button"
               data-ocid="home.delete_button"
-              onClick={onLogout}
+              onClick={() => setLogoutOpen(true)}
               className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-red-400/50 transition-colors"
               aria-label="Logout"
             >
@@ -136,7 +190,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
       </main>
 
       <nav className="bg-card border-t border-border shadow-lg">
-        <div className="flex">
+        <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -146,12 +200,12 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                 key={tab.id}
                 data-ocid={`home.${tab.id}.tab`}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex-1 flex flex-col items-center gap-1 py-3 relative transition-colors"
+                className="flex-1 min-w-[56px] flex flex-col items-center gap-1 py-3 relative transition-colors"
               >
                 {isActive && (
                   <motion.div
                     layoutId="tab-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 phoenix-gradient rounded-full"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 phoenix-gradient rounded-full"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                   />
                 )}
@@ -162,18 +216,22 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                         ? "text-pink-500"
                         : tab.id === "calls"
                           ? "text-emerald-500"
-                          : "text-primary"
+                          : tab.id === "coding"
+                            ? "text-violet-500"
+                            : "text-primary"
                       : "text-muted-foreground"
                   }`}
                 />
                 <span
-                  className={`text-xs font-body transition-colors ${
+                  className={`text-[10px] font-body transition-colors ${
                     isActive
                       ? tab.id === "feels"
                         ? "text-pink-500 font-semibold"
                         : tab.id === "calls"
                           ? "text-emerald-500 font-semibold"
-                          : "text-primary font-semibold"
+                          : tab.id === "coding"
+                            ? "text-violet-500 font-semibold"
+                            : "text-primary font-semibold"
                       : "text-muted-foreground"
                   }`}
                 >
@@ -184,6 +242,28 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
           })}
         </div>
       </nav>
+      <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <AlertDialogContent data-ocid="home.logout.dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Log Out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out of Phonex?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-ocid="home.logout.cancel_button">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              data-ocid="home.logout.confirm_button"
+              onClick={onLogout}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

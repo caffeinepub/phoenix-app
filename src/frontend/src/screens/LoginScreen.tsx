@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Lock, Mail, Moon, Sun } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
-const phonexLogo =
-  "/assets/generated/phonex-phoenix-logo-transparent.dim_512x512.png";
+const phonexLogo = "/assets/uploads/Phonex-Icon-1-1.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -95,7 +94,7 @@ export default function LoginScreen({
           <img
             src={phonexLogo}
             alt="Phonex Logo"
-            className="w-20 h-20 object-contain drop-shadow-lg mb-4"
+            className="w-20 h-20 object-contain drop-shadow-lg mb-4 rounded-full"
           />
           <h1
             className="font-display text-4xl font-black tracking-tight"
@@ -138,6 +137,7 @@ export default function LoginScreen({
                 id="email"
                 data-ocid="login.input"
                 type="email"
+                autoFocus
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

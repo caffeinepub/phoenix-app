@@ -1,4 +1,5 @@
 // PhonexDB — localStorage-backed data service for all Phonex app data
+import { cloudSync } from "./CloudSyncService";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface PhonexUser {
@@ -108,6 +109,10 @@ export function registerUser(user: PhonexUser): void {
     (u) => u.paymentId !== user.paymentId && u.email !== user.email,
   );
   write(KEYS.users, [...filtered, user]);
+  cloudSync.syncUserData(
+    user.paymentId,
+    user as unknown as Record<string, unknown>,
+  );
 }
 
 export function loginUser(
@@ -140,6 +145,13 @@ export function updateUser(
     u.paymentId === paymentId ? { ...u, ...fields } : u,
   );
   write(KEYS.users, updated);
+  const updatedUser = updated.find((u) => u.paymentId === paymentId);
+  if (updatedUser) {
+    cloudSync.syncUserData(
+      paymentId,
+      updatedUser as unknown as Record<string, unknown>,
+    );
+  }
 }
 
 export function getAllUsers(): PhonexUser[] {
@@ -181,6 +193,7 @@ export function addTransaction(tx: PhonexTransaction): void {
     [],
   );
   write(KEYS.transactions(tx.senderPaymentId), [tx, ...txs]);
+  cloudSync.syncTransactions(tx.senderPaymentId);
   // Also store in receiver's list if it's a phonex transfer
   if (tx.channel === "PHONEX" && tx.receiverPaymentId !== tx.senderPaymentId) {
     const rxTxs = read<PhonexTransaction[]>(
@@ -188,6 +201,7 @@ export function addTransaction(tx: PhonexTransaction): void {
       [],
     );
     write(KEYS.transactions(tx.receiverPaymentId), [tx, ...rxTxs]);
+    cloudSync.syncTransactions(tx.receiverPaymentId);
   }
 }
 
@@ -258,6 +272,7 @@ export function sendMessage(msg: PhonexMessage): void {
   const key = KEYS.messages(msg.fromPaymentId, msg.toPaymentId);
   const msgs = read<PhonexMessage[]>(key, []);
   write(key, [...msgs, msg]);
+  cloudSync.syncMessages(key);
 }
 
 export function getConversation(

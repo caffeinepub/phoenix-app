@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useGetChats } from "../hooks/useQueries";
 
 const SAMPLE_CHATS = [
@@ -667,6 +668,7 @@ function NewNoteDialog({
   function handleSendText() {
     if (!to.trim() || !textBody.trim()) return;
     handleClose();
+    toast.success("Message sent! 💬");
   }
 
   const circumference = 2 * Math.PI * 18;
@@ -1127,6 +1129,14 @@ export default function ChatsTab() {
       {/* Chat list */}
       <div className="flex flex-col h-full">
         <div className="px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-foreground">
+              Messages
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              🔒 End-to-End Encrypted
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

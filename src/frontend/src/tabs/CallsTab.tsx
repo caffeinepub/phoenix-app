@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type CallType = "incoming" | "outgoing" | "missed";
 type CallKind = "voice" | "video";
@@ -458,6 +459,7 @@ export default function CallsTab() {
 
   function startCall(name: string, avatar: string, kind: CallKind) {
     setActiveCall({ name, avatar: avatar.substring(0, 2).toUpperCase(), kind });
+    toast.success(`${kind === "video" ? "📹 Video" : "📞 Voice"} call started`);
   }
 
   function openNewCall(kind?: CallKind) {

@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -62,6 +63,7 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
   const handleSave = () => {
     updateProfile({ ...form, avatarUrl: avatarUrl ?? undefined });
     setEditing(false);
+    toast.success("Profile saved! ✓");
   };
 
   const handleCancel = () => {
@@ -90,6 +92,7 @@ export default function ProfileScreen({ onBack, onLogout }: Props) {
     if (currentUser?.paymentId) {
       navigator.clipboard.writeText(currentUser.paymentId).catch(() => {});
       setCopied(true);
+      toast.success("Payment ID copied!");
       setTimeout(() => setCopied(false), 2000);
     }
   };

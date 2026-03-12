@@ -129,4 +129,80 @@
     backdrop-filter: blur(12px);
     background: oklch(var(--card) / 0.85);
   }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Multi-Platform / Responsive baseline ──────────────────────────────────────── */
+
+/* Center app container on desktop */
+#root {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* On desktop, add subtle shadow/border to make it look like a phone frame */
+@media (min-width: 768px) {
+  #root {
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.15);
+    border-left: 1px solid oklch(var(--border));
+    border-right: 1px solid oklch(var(--border));
+  }
+}
+
+/* iOS input zoom prevention — font-size must be >= 16px */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* Restore smaller font for non-zoom contexts when explicitly set */
+.text-xs input,
+.text-xs textarea {
+  font-size: 14px !important;
+}
+
+/* Safe area insets for notched phones */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* iOS momentum scrolling */
+.overflow-y-auto,
+.overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal overflow on all screens */
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Minimum tap target size: 44px */
+button,
+[role="button"],
+a {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Exceptions for inline/icon-only elements that are visually larger via padding */
+.min-h-0,
+.h-auto {
+  min-height: unset;
 }

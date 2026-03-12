@@ -21,14 +21,17 @@ import {
   ChevronDown,
   ChevronUp,
   Inbox,
+  Loader2,
   Paperclip,
   Plus,
+  Send as SendIcon,
   Star,
   Users,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 const SAMPLE_CONTACTS = [
   {
@@ -145,11 +148,16 @@ export default function EmailTab() {
   const attachIdRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isSending, setIsSending] = useState(false);
+
   // Contacts state
   const [headerContactsOpen, setHeaderContactsOpen] = useState(false);
   const [composeContactsOpen, setComposeContactsOpen] = useState(false);
 
-  function handleSend() {
+  async function handleSend() {
+    if (!to.trim() || !subject.trim()) return;
+    setIsSending(true);
+    await new Promise((r) => setTimeout(r, 600));
     if (currentUser?.paymentId) {
       dbSendEmail({
         id: `email-${Date.now()}`,
@@ -175,8 +183,10 @@ export default function EmailTab() {
         isRead: true,
       });
     }
+    setIsSending(false);
     setComposeOpen(false);
     resetForm();
+    toast.success("Email sent! 📧");
   }
 
   function handleCancel() {
@@ -560,13 +570,17 @@ export default function EmailTab() {
             <Button
               data-ocid="email.send.submit_button"
               onClick={handleSend}
-              disabled={!to.trim() || !subject.trim()}
+              disabled={!to.trim() || !subject.trim() || isSending}
               className="phoenix-gradient text-primary-foreground border-0 hover:opacity-90"
             >
-              Send
-              {attachments.length > 0
-                ? ` (${attachments.length} file${attachments.length > 1 ? "s" : ""})`
-                : ""}
+              {isSending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <SendIcon className="mr-2 h-4 w-4" />
+              )}
+              {isSending
+                ? "Sending…"
+                : `Send${attachments.length > 0 ? ` (${attachments.length})` : ""}`}
             </Button>
           </div>
         </SheetContent>
