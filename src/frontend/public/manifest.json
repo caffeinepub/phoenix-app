@@ -1,5 +1,5 @@
 {
-  "id": "/",
+  "id": "phonex-app",
   "name": "Phonex - Rise. Connect. Thrive.",
   "short_name": "Phonex",
   "description": "Phonex is a secure, all-in-one communication and payment app featuring end-to-end encrypted chats, voice and video calls, Feels (social status), email, and a full PKR wallet with bank transfers and mobile top-up.",
@@ -12,8 +12,24 @@
   "lang": "en",
   "dir": "ltr",
   "categories": ["communication", "finance", "social"],
-  "iarc_rating_id": "",
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "prefer_related_applications": false,
+  "related_applications": [],
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "file_handlers": [],
+  "protocol_handlers": [],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "widgets": [],
   "icons": [
     {
       "src": "/assets/generated/phonex-icon-96.dim_96x96.png",
