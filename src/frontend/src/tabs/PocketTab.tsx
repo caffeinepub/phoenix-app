@@ -1659,10 +1659,10 @@ export default function PocketTab() {
       <div className="phoenix-gradient px-5 pt-6 pb-8">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <p className="text-primary-foreground/70 text-xs font-medium uppercase tracking-widest">
+            <p className="text-[#1a3a6e]/80 dark:text-white/80 text-xs font-medium uppercase tracking-widest">
               PKR Balance
             </p>
-            <p className="text-5xl font-black text-primary-foreground mt-1 tracking-tight">
+            <p className="text-5xl font-black text-[#1a3a6e] dark:text-[#c0392b] mt-1 tracking-tight">
               Rs.{balance.toLocaleString()}
             </p>
           </div>

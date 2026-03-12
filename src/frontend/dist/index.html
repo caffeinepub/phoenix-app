@@ -4,8 +4,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json" />
     <title>Phonex</title>
-    <script type="module" crossorigin src="/assets/index-yPf-eMnk.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-v3di1eSC.css">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-DyIyqFdc.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CyOWZkwd.css">
   </head>
   <body>
     <div id="root"></div>
