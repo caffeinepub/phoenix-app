@@ -708,7 +708,7 @@ function NewNoteDialog({
       <SheetContent
         side="bottom"
         data-ocid="chats.new_note.dialog"
-        className="rounded-t-3xl max-h-[55vh] overflow-y-auto px-3 pb-4"
+        className="rounded-t-3xl max-h-[45vh] overflow-y-auto px-2 pb-2"
       >
         {step === "pick" && (
           <>
@@ -720,17 +720,17 @@ function NewNoteDialog({
             <p className="text-sm text-muted-foreground -mt-1 mb-1">
               Choose a note type to send
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {noteTypes.map(({ type, Icon, label, desc, color }) => (
                 <button
                   key={type}
                   type="button"
                   data-ocid={`chats.new_note.${type}_button`}
                   onClick={() => setStep(type)}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-border bg-secondary hover:bg-accent/50 active:scale-[0.98] transition-all text-left"
+                  className="flex items-center gap-3 p-2 rounded-2xl border border-border bg-secondary hover:bg-accent/50 active:scale-[0.98] transition-all text-left"
                 >
                   <div
-                    className={`w-8 h-8 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
+                    className={`w-6 h-6 rounded-full ${color} flex items-center justify-center flex-shrink-0`}
                   >
                     <Icon className="w-4 h-4 text-white" />
                   </div>
@@ -771,7 +771,7 @@ function NewNoteDialog({
                 </SheetTitle>
               </div>
             </SheetHeader>
-            <div className="flex flex-col gap-3 py-1">
+            <div className="flex flex-col gap-2 py-0">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="note-to" className="text-sm font-medium">
                   To
@@ -847,11 +847,11 @@ function NewNoteDialog({
                   placeholder="Write your message..."
                   value={textBody}
                   onChange={(e) => setTextBody(e.target.value)}
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[70px] resize-none"
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end mt-2">
+            <div className="flex gap-1 justify-end mt-1">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.text.cancel_button"
@@ -891,7 +891,7 @@ function NewNoteDialog({
                 </SheetTitle>
               </div>
             </SheetHeader>
-            <div className="flex flex-col gap-3 py-1">
+            <div className="flex flex-col gap-2 py-0">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="voice-to" className="text-sm font-medium">
                   To
@@ -904,14 +904,14 @@ function NewNoteDialog({
                   onChange={(e) => setTo(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col items-center gap-4 py-4">
+              <div className="flex flex-col items-center gap-2 py-2">
                 <button
                   type="button"
                   data-ocid="chats.new_note.voice.primary_button"
                   onClick={() =>
                     recording ? stopRecording(true) : setRecording(true)
                   }
-                  className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
                     recording ? "bg-destructive scale-110" : "bg-green-500"
                   }`}
                 >
@@ -943,7 +943,7 @@ function NewNoteDialog({
                 )}
               </div>
             </div>
-            <div className="flex gap-2 justify-end mt-2">
+            <div className="flex gap-1 justify-end mt-1">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.voice.cancel_button"
@@ -984,7 +984,7 @@ function NewNoteDialog({
                 </SheetTitle>
               </div>
             </SheetHeader>
-            <div className="flex flex-col gap-3 py-1">
+            <div className="flex flex-col gap-2 py-0">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="video-to" className="text-sm font-medium">
                   To
@@ -997,7 +997,7 @@ function NewNoteDialog({
                   onChange={(e) => setTo(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col items-center gap-4 py-4">
+              <div className="flex flex-col items-center gap-2 py-2">
                 <button
                   type="button"
                   data-ocid="chats.new_note.video.primary_button"
@@ -1067,7 +1067,7 @@ function NewNoteDialog({
                 )}
               </div>
             </div>
-            <div className="flex gap-2 justify-end mt-2">
+            <div className="flex gap-1 justify-end mt-1">
               <Button
                 variant="outline"
                 data-ocid="chats.new_note.video.cancel_button"

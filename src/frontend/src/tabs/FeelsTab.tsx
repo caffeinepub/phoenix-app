@@ -497,16 +497,16 @@ export default function FeelsTab() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="bottom"
-          className="rounded-t-3xl pb-safe-bottom max-h-[65vh] overflow-y-auto"
+          className="rounded-t-3xl pb-safe-bottom max-h-[50vh] overflow-y-auto px-3 pb-3"
         >
           <SheetHeader>
-            <SheetTitle className="font-display text-lg flex items-center gap-2">
+            <SheetTitle className="font-display text-sm font-semibold flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-pink-500" />
               Share a Feel
             </SheetTitle>
           </SheetHeader>
 
-          <div className="mt-2 space-y-2">
+          <div className="mt-1 space-y-1">
             {/* Category selector */}
             <div className="grid grid-cols-5 gap-1">
               {CATEGORIES.map((cat) => (
@@ -584,7 +584,7 @@ export default function FeelsTab() {
 
             {/* Media preview */}
             {mediaUrl && (
-              <div className="relative w-full h-20 rounded-xl overflow-hidden">
+              <div className="relative w-full h-14 rounded-xl overflow-hidden">
                 {mediaType === "video" ? (
                   <video
                     src={mediaUrl}

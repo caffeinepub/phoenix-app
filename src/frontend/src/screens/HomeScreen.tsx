@@ -9,7 +9,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Code2,
   LogOut,
   Mail,
   MessageCircle,
@@ -28,7 +27,6 @@ import { useSyncStatus } from "../contexts/SyncContext";
 import { useTheme } from "../contexts/ThemeContext";
 import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
-import CodingTab from "../tabs/CodingTab";
 import EmailTab from "../tabs/EmailTab";
 import FeelsTab from "../tabs/FeelsTab";
 import PocketTab from "../tabs/PocketTab";
@@ -44,7 +42,6 @@ const TABS = [
   { id: "email", label: "Email", icon: Mail },
   { id: "pocket", label: "Pocket", icon: Wallet },
   { id: "calls", label: "Calls", icon: Phone },
-  { id: "coding", label: "Coding", icon: Code2 },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -95,7 +92,6 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
     calls: <CallsTab />,
     email: <EmailTab />,
     pocket: <PocketTab />,
-    coding: <CodingTab />,
   };
 
   return (
@@ -216,9 +212,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                         ? "text-pink-500"
                         : tab.id === "calls"
                           ? "text-emerald-500"
-                          : tab.id === "coding"
-                            ? "text-violet-500"
-                            : "text-primary"
+                          : "text-primary"
                       : "text-muted-foreground"
                   }`}
                 />
@@ -229,9 +223,7 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                         ? "text-pink-500 font-semibold"
                         : tab.id === "calls"
                           ? "text-emerald-500 font-semibold"
-                          : tab.id === "coding"
-                            ? "text-violet-500 font-semibold"
-                            : "text-primary font-semibold"
+                          : "text-primary font-semibold"
                       : "text-muted-foreground"
                   }`}
                 >
