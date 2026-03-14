@@ -77,18 +77,6 @@
   },
   "icons": [
     {
-      "src": "/assets/generated/phonex-icon-96.dim_96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/assets/generated/phonex-icon-144.dim_144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
       "src": "/assets/generated/phonex-icon-192.dim_192x192.png",
       "sizes": "192x192",
       "type": "image/png",
@@ -113,41 +101,41 @@
       "short_name": "Chats",
       "description": "Go to your messages",
       "url": "/?tab=chats",
-      "icons": [{ "src": "/assets/generated/phonex-icon-96.dim_96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [{ "src": "/assets/generated/phonex-icon-192.dim_192x192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Open Pocket",
       "short_name": "Pocket",
       "description": "Go to your wallet",
       "url": "/?tab=pocket",
-      "icons": [{ "src": "/assets/generated/phonex-icon-96.dim_96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [{ "src": "/assets/generated/phonex-icon-192.dim_192x192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "screenshots": [
     {
       "src": "/assets/generated/screenshot-login.dim_390x844.png",
-      "sizes": "390x844",
+      "sizes": "704x1520",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Phonex login screen"
     },
     {
       "src": "/assets/generated/screenshot-chats.dim_390x844.png",
-      "sizes": "390x844",
+      "sizes": "704x1520",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Phonex Chats tab with Text, Voice and Video Notes"
     },
     {
       "src": "/assets/generated/screenshot-pocket.dim_390x844.png",
-      "sizes": "390x844",
+      "sizes": "704x1520",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Phonex Pocket wallet with PKR balance"
     },
     {
       "src": "/assets/generated/screenshot-mobile-2.dim_390x844.png",
-      "sizes": "390x844",
+      "sizes": "704x1520",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Phonex home screen"
