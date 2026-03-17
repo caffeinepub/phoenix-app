@@ -100,10 +100,25 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
         <div className="flex items-center justify-between py-4">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <img
+              <motion.img
                 src={phonexLogo}
                 alt="Phonex Logo"
-                className="w-8 h-8 object-contain drop-shadow-md rounded-full"
+                className="w-8 h-8 object-contain rounded-full"
+                animate={{
+                  filter: [
+                    "drop-shadow(0 0 4px #60a5fa) drop-shadow(0 0 8px #60a5fa)",
+                    "drop-shadow(0 0 8px #a78bfa) drop-shadow(0 0 16px #a78bfa)",
+                    "drop-shadow(0 0 6px #34d399) drop-shadow(0 0 12px #34d399)",
+                    "drop-shadow(0 0 8px #f472b6) drop-shadow(0 0 14px #f472b6)",
+                    "drop-shadow(0 0 4px #60a5fa) drop-shadow(0 0 8px #60a5fa)",
+                  ],
+                  scale: [1, 1.05, 1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
               />
               <h1
                 className="font-display text-xl font-black tracking-tight"
@@ -137,26 +152,31 @@ export default function HomeScreen({ onLogout, onNavigateProfile }: Props) {
                 <Moon className="w-4 h-4 text-white" />
               )}
             </button>
-            <button
-              type="button"
-              data-ocid="home.secondary_button"
-              onClick={onNavigateProfile}
-              className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors relative"
-              aria-label="Profile"
-            >
-              {currentUser?.avatarUrl ? (
-                <img
-                  src={currentUser.avatarUrl}
-                  alt="avatar"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <User className="w-4 h-4 text-white" />
-              )}
-              {currentUser?.displayName && (
+            <div className="flex flex-col items-center gap-0.5">
+              <button
+                type="button"
+                data-ocid="home.secondary_button"
+                onClick={onNavigateProfile}
+                className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors relative"
+                aria-label="Profile"
+              >
+                {currentUser?.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="w-4 h-4 text-white" />
+                )}
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-              )}
-            </button>
+              </button>
+              <span className="text-[9px] text-white/90 font-medium leading-tight max-w-[44px] truncate text-center">
+                {currentUser?.displayName ||
+                  (currentUser as any)?.name ||
+                  "User"}
+              </span>
+            </div>
             <button
               type="button"
               data-ocid="home.delete_button"

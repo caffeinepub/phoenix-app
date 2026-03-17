@@ -904,13 +904,65 @@ function NewNoteDialog({
                 <Label htmlFor="voice-to" className="text-sm font-medium">
                   To
                 </Label>
-                <Input
-                  id="voice-to"
-                  data-ocid="chats.new_note.voice.to_input"
-                  placeholder="Contact name..."
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="voice-to"
+                    data-ocid="chats.new_note.voice.to_input"
+                    placeholder="Contact name..."
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    data-ocid="chats.new_note.voice.contacts_button"
+                    onClick={() => setContactPickerOpen(true)}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-500/10 text-green-600 text-xs font-medium hover:bg-green-500/20 transition-colors flex-shrink-0 border border-green-500/20"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Contacts
+                  </button>
+                </div>
+                <Dialog
+                  open={contactPickerOpen}
+                  onOpenChange={setContactPickerOpen}
+                >
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="font-display font-bold">
+                        Select Contact
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                      {SAMPLE_CONTACTS.map((contact, idx) => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          data-ocid={`chats.voice.contact.select_button.${idx + 1}`}
+                          onClick={() => {
+                            setTo(contact.phonexId);
+                            setContactPickerOpen(false);
+                          }}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/50 transition-colors text-left border border-border hover:border-green-500/30"
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-full ${contact.color} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
+                          >
+                            {contact.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground">
+                              {contact.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {contact.phonexId}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="flex flex-col items-center gap-2 py-2">
                 <button
@@ -997,13 +1049,65 @@ function NewNoteDialog({
                 <Label htmlFor="video-to" className="text-sm font-medium">
                   To
                 </Label>
-                <Input
-                  id="video-to"
-                  data-ocid="chats.new_note.video.to_input"
-                  placeholder="Contact name..."
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="video-to"
+                    data-ocid="chats.new_note.video.to_input"
+                    placeholder="Contact name..."
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    data-ocid="chats.new_note.video.contacts_button"
+                    onClick={() => setContactPickerOpen(true)}
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-purple-500/10 text-purple-600 text-xs font-medium hover:bg-purple-500/20 transition-colors flex-shrink-0 border border-purple-500/20"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Contacts
+                  </button>
+                </div>
+                <Dialog
+                  open={contactPickerOpen}
+                  onOpenChange={setContactPickerOpen}
+                >
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle className="font-display font-bold">
+                        Select Contact
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                      {SAMPLE_CONTACTS.map((contact, idx) => (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          data-ocid={`chats.video.contact.select_button.${idx + 1}`}
+                          onClick={() => {
+                            setTo(contact.phonexId);
+                            setContactPickerOpen(false);
+                          }}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/50 transition-colors text-left border border-border hover:border-purple-500/30"
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-full ${contact.color} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
+                          >
+                            {contact.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground">
+                              {contact.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {contact.phonexId}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="flex flex-col items-center gap-2 py-2">
                 <button
@@ -1203,30 +1307,38 @@ export default function ChatsTab() {
 
           {/* Note type circular dashed buttons — same spot as old New Chat */}
           <div className="flex items-start justify-around">
-            {noteActions.map(
-              ({ step, Icon, label, color, borderColor, ocid }) => (
-                <button
-                  key={step}
-                  type="button"
-                  data-ocid={ocid}
-                  onClick={() => openNoteDialog(step)}
-                  className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+            {noteActions.map(({ step, Icon, label, ocid }) => (
+              <button
+                key={step}
+                type="button"
+                data-ocid={ocid}
+                onClick={() => openNoteDialog(step)}
+                className="flex flex-col items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <div
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all hover:scale-105 hover:shadow-xl border border-white/30 backdrop-blur-sm ${
+                    step === "text"
+                      ? "bg-gradient-to-br from-blue-400/80 via-blue-500/60 to-cyan-400/80"
+                      : step === "voice"
+                        ? "bg-gradient-to-br from-emerald-400/80 via-green-500/60 to-teal-400/80"
+                        : "bg-gradient-to-br from-violet-400/80 via-purple-500/60 to-fuchsia-400/80"
+                  }`}
+                  style={{
+                    boxShadow:
+                      step === "text"
+                        ? "0 4px 20px rgba(59,130,246,0.5), inset 0 1px 0 rgba(255,255,255,0.3)"
+                        : step === "voice"
+                          ? "0 4px 20px rgba(16,185,129,0.5), inset 0 1px 0 rgba(255,255,255,0.3)"
+                          : "0 4px 20px rgba(139,92,246,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
+                  }}
                 >
-                  <div
-                    className={`w-14 h-14 rounded-full border-2 border-dashed ${borderColor} flex items-center justify-center hover:opacity-80 transition-opacity`}
-                  >
-                    <div
-                      className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shadow-sm`}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-medium text-muted-foreground leading-tight text-center">
-                    {label}
-                  </span>
-                </button>
-              ),
-            )}
+                  <Icon className="w-6 h-6 text-white drop-shadow-md" />
+                </div>
+                <span className="text-[11px] font-semibold text-foreground leading-tight text-center">
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
