@@ -20,6 +20,13 @@ import { toast } from "sonner";
 
 type Category = "happy" | "sad" | "travel" | "work" | "shopping";
 
+interface FeelReactions {
+  heart: number;
+  good: number;
+  bad: number;
+  smile: number;
+}
+
 interface Feel {
   id: string;
   category: Category;
@@ -27,10 +34,18 @@ interface Feel {
   createdAt: number;
   mediaUrl?: string;
   mediaType?: "image" | "video";
+  reactions?: FeelReactions;
 }
 
+const DEFAULT_REACTIONS: FeelReactions = {
+  heart: 0,
+  good: 0,
+  bad: 0,
+  smile: 0,
+};
+
 const EXPIRE_MS = 12 * 60 * 60 * 1000; // 12 hours
-const PLAY_DURATION_MS = 30 * 1000; // 30 seconds view time
+const PLAY_DURATION_MS = 15 * 1000; // 15 seconds view time
 
 const CATEGORIES: {
   id: Category;
@@ -248,7 +263,7 @@ function FeelViewer({ feel, onClose }: FeelViewerProps) {
 
             {/* Timer indicator */}
             <p className="text-white/60 text-xs">
-              {Math.ceil(((100 - progress) / 100) * 30)}s remaining
+              {Math.ceil(((100 - progress) / 100) * 15)}s remaining
             </p>
           </div>
         </motion.div>
@@ -481,8 +496,57 @@ export default function FeelsTab() {
                           {feel.caption}
                         </p>
                       )}
+
                       <div className="mt-2">
                         <ExpiryBar startedAt={feel.createdAt} />
+                      </div>
+                      <div
+                        className="flex gap-1.5 mt-2"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        {[
+                          { key: "heart" as const, emoji: "❤️" },
+                          { key: "good" as const, emoji: "👍" },
+                          { key: "bad" as const, emoji: "😞" },
+                          { key: "smile" as const, emoji: "😊" },
+                        ].map((r) => {
+                          const count = (feel.reactions ?? DEFAULT_REACTIONS)[
+                            r.key
+                          ];
+                          return (
+                            <button
+                              key={r.key}
+                              type="button"
+                              data-ocid={`feels.react.${r.key}.button`}
+                              onClick={() => {
+                                setFeels((prev) =>
+                                  prev.map((f) =>
+                                    f.id === feel.id
+                                      ? {
+                                          ...f,
+                                          reactions: {
+                                            ...(f.reactions ??
+                                              DEFAULT_REACTIONS),
+                                            [r.key]:
+                                              (f.reactions?.[r.key] ?? 0) + 1,
+                                          },
+                                        }
+                                      : f,
+                                  ),
+                                );
+                              }}
+                              className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all hover:scale-110 active:scale-95 bg-background/50 border-border hover:bg-white/70"
+                            >
+                              <span>{r.emoji}</span>
+                              {count > 0 && (
+                                <span className="text-muted-foreground">
+                                  {count}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

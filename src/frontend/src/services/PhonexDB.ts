@@ -14,6 +14,8 @@ export interface PhonexUser {
   pocketPin: string;
   avatarUrl: string;
   createdAt: number;
+  blocked?: boolean;
+  restricted?: boolean;
 }
 
 export interface PhonexTransaction {
@@ -74,6 +76,19 @@ export interface PhonexMessage {
   timestamp: number;
 }
 
+export interface SecurityEvent {
+  id: string;
+  type:
+    | "failed_login"
+    | "blocked_attempt"
+    | "suspicious_activity"
+    | "account_locked";
+  email: string;
+  ip?: string;
+  timestamp: number;
+  details: string;
+}
+
 // ── Storage helpers ────────────────────────────────────────────────────────────
 function read<T>(key: string, fallback: T): T {
   try {
@@ -100,6 +115,8 @@ const KEYS = {
   messages: (pid1: string, pid2: string) =>
     `phonex_db_msgs_${[pid1, pid2].sort().join("_")}`,
   balance: (pid: string) => `phonex_db_balance_${pid}`,
+  securityEvents: "phonex_security_events",
+  failedLogins: "phonex_failed_logins",
 };
 
 // ── Users ─────────────────────────────────────────────────────────────────────
@@ -166,15 +183,67 @@ export function deleteUserAccount(paymentId: string): void {
   );
 }
 
-/**
- * Reset a user's password by email. Returns true if the user was found and updated.
- */
 export function resetPassword(email: string, newPassword: string): boolean {
   const users = read<PhonexUser[]>(KEYS.users, []);
   const user = users.find((u) => u.email === email);
   if (!user) return false;
   updateUser(user.paymentId, { password: newPassword });
   return true;
+}
+
+// ── Admin user management ──────────────────────────────────────────────────────
+export function blockUser(paymentId: string): void {
+  updateUser(paymentId, { blocked: true });
+}
+
+export function unblockUser(paymentId: string): void {
+  updateUser(paymentId, { blocked: false });
+}
+
+export function restrictUser(paymentId: string): void {
+  updateUser(paymentId, { restricted: true });
+}
+
+export function unrestrictUser(paymentId: string): void {
+  updateUser(paymentId, { restricted: false });
+}
+
+export function adminDeleteUser(paymentId: string): void {
+  deleteUserAccount(paymentId);
+}
+
+// ── Security Events ───────────────────────────────────────────────────────────
+export function logSecurityEvent(event: SecurityEvent): void {
+  const events = read<SecurityEvent[]>(KEYS.securityEvents, []);
+  write(KEYS.securityEvents, [event, ...events].slice(0, 500));
+}
+
+export function getSecurityEvents(): SecurityEvent[] {
+  return read<SecurityEvent[]>(KEYS.securityEvents, []);
+}
+
+export function clearSecurityEvents(): void {
+  write(KEYS.securityEvents, []);
+}
+
+// ── Failed Login Tracking ─────────────────────────────────────────────────────
+export function incrementFailedLogin(email: string): number {
+  const map = read<Record<string, number>>(KEYS.failedLogins, {});
+  const count = (map[email] ?? 0) + 1;
+  write(KEYS.failedLogins, { ...map, [email]: count });
+  return count;
+}
+
+export function getFailedLogins(email: string): number {
+  const map = read<Record<string, number>>(KEYS.failedLogins, {});
+  return map[email] ?? 0;
+}
+
+export function resetFailedLogins(email: string): void {
+  const map = read<Record<string, number>>(KEYS.failedLogins, {});
+  const updated = { ...map };
+  delete updated[email];
+  write(KEYS.failedLogins, updated);
 }
 
 // ── Balance ───────────────────────────────────────────────────────────────────
@@ -194,7 +263,6 @@ export function addTransaction(tx: PhonexTransaction): void {
   );
   write(KEYS.transactions(tx.senderPaymentId), [tx, ...txs]);
   cloudSync.syncTransactions(tx.senderPaymentId);
-  // Also store in receiver's list if it's a phonex transfer
   if (tx.channel === "PHONEX" && tx.receiverPaymentId !== tx.senderPaymentId) {
     const rxTxs = read<PhonexTransaction[]>(
       KEYS.transactions(tx.receiverPaymentId),
@@ -231,7 +299,6 @@ export function deleteMyFeel(feelId: string, paymentId: string): void {
 
 // ── Emails ────────────────────────────────────────────────────────────────────
 export function sendEmail(email: PhonexEmail): void {
-  // Store in sender's sent
   const sent = read<PhonexEmail[]>(KEYS.emails(email.fromPaymentId), []);
   write(KEYS.emails(email.fromPaymentId), [email, ...sent]);
 }

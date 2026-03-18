@@ -1,36 +1,45 @@
-# Phonex App
+# Phonex App — Complete Remaining Features
 
 ## Current State
-Phonex is a React/TypeScript frontend on ICP with a Motoko backend. The backend currently stores basic user profiles, chats, class groups, and job listings. The frontend has all 5 tabs (Chats, Feels, Email, Pocket, Calls) with UI flows implemented, but backend data integration for transactions, feels, emails, contacts, and full user accounts (with password, payment ID, bank details, PIN) is incomplete. Pakistan bank/operator lists are not yet in the app.
+Phonex is a React/TypeScript PWA with tabs: Home, Chats, Feels, Email, Pocket, Calls. Admin portal exists. Profile screen supports avatar editing, bank info, dark mode name color toggle. FeelsTab has 30s posts. AdminScreen has user management and security agent. PhonexDB service manages localStorage. ThemeContext handles light/dark.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full user account model: username, passwordHash, email, phone, bankName, bankAccount, paymentId (PXP-XXXXXXXX), pocketPin, avatarUrl, displayName
-- Transactions storage: id, senderId, receiverId, amount (PKR), channel (PHONEX/EXTERNAL/TOPUP), type, timestamp, status, receiptData (bankName, ibanLast3, operatorName, mobileNumber)
-- Feels storage: id, userId, mediaUrl, mediaType (photo/video), mood, caption, createdAt, expiresAt (12h auto-expiry)
-- Email storage: id, fromUserId, toAddress, ccAddresses, bccAddresses, subject, body, attachmentNames, timestamp, isRead
-- Contacts storage per user: id, name, phonexId, email, phone
-- Static Pakistan banks list (20+ major banks)
-- Static Pakistan mobile operators list (Jazz, Telenor, Zong, Ufone, Warid)
-- Backend functions: register, login (by phonexId or email + password), getMyAccount, updateAccount, addTransaction, getMyTransactions, addFeel, getActiveFeels, addEmail, getMyEmails, addContact, getMyContacts, deleteContact, verifyPaymentId (lookup user by paymentId)
+- **Change Password** in Profile screen: new password field with confirm, saves to PhonexDB
+- **Save/New Contact** button in Contacts panel (ChatsTab, CallsTab, EmailTab): form to add name + Phonex ID/email/phone
+- **Save/New Email Address** option in Email contacts
+- **Feels reactions**: Heart, Good, Bad, Smile emoji reactions on each Feel card
+- **Crystal special emojis**: a small emoji picker component with crystal-styled unique emojis (💎🔮✨⚡🌟💫🌈🔷🔹🌀) that can be used in Text Note compose
+- **Smart Tab** added to main nav (between Calls and end): inner sub-tabs: Smart, Peers, Chat, Blast, Account, Billing
+  - Smart: animated BLE orb toggle button, radar canvas showing peers, stats bar (peers/range/relays/hops), daily note counter with progress bar, Pro badge placeholder, quick actions: Peers/Broadcast/BT Call
+  - Peers: peer list with signal bars, hop badges, distance, relay nodes section, tap peer to open BLE chat
+  - Chat (BLE): mesh chat with delivery status, daily limit bar for free users
+  - Blast: broadcast form to all mesh nodes
+  - Account: profile card with avatar/name/email, subscription card (plan/price/expiry), Smart Mode status, upgrade button to Billing
+  - Billing: JazzCash flow: Step 1 show account 0300-3257502 Phonex App PKR 1,000 with copy; Step 2 enter Transaction ID + JazzCash number; Step 3 review + simulate approve; Step 4 success/Pro activated
+- **App Settings screen**: accessible from Profile, contains: Color Mode toggle (Light/Dark), Smart Mode toggle, notification preferences placeholder
+- **Admin Summary Board**: update to show total users, blocked users, complaints count, pending reviews, security events count
 
 ### Modify
-- User authentication flow: register saves full account; login returns full user data
-- Pocket tab: use real Pakistan banks/operators from static lists; wire send/receive/topup to backend transactions
-- Chats tab: wire contacts to backend
-- Calls tab: add contacts panel using backend contacts
-- Emails tab: add contacts panel using backend contacts
-- App name in dark mode: add maroon as an option alongside white
+- **Profile screen**: add Change Password section below phone/email fields
+- **FeelsTab**: reduce auto-expire timer display and progress to 15 seconds (was 30s)
+- **HomeScreen DashboardTab**: remove Quick Access row/buttons section
+- **Tab bar**: active tab should have stronger visual highlight (bold label + colored icon + gradient indicator already present — ensure it works well)
+- **AdminScreen**: update the summary board to show management-focused stats (total users, blocked, complaints, security events)
+- **Contacts panel** in Chats/Calls/Email: add "New Contact" button at top
 
 ### Remove
-- ClassGroup and JobListing backend data (no longer needed)
+- Quick Access pill buttons row from Home dashboard tab
 
 ## Implementation Plan
-1. Regenerate backend with full Phonex data models and all required functions
-2. Update AuthContext to call backend register/login and persist full user state
-3. Update PocketTab to use Pakistan banks/operators lists and wire transactions to backend
-4. Update ChatsTab, CallsTab, EmailTab to use backend contacts
-5. Update FeelsTab to load/save feels from backend
-6. Update EmailTab to load/save emails from backend
-7. Add maroon dark mode option for app name
+1. Update `HomeScreen.tsx` — remove `quickLinks` section from DashboardTab
+2. Update `ProfileScreen.tsx` — add Change Password form section, add App Settings link
+3. Create `AppSettingsScreen.tsx` — light/dark toggle, Smart Mode toggle
+4. Update `FeelsTab.tsx` — change 30s references to 15s; add reaction row (Heart/Good/Bad/Smile) on each Feel card
+5. Update `ChatsTab.tsx`, `CallsTab.tsx`, `EmailTab.tsx` — add New Contact button in contacts panel
+6. Create `SmartTab.tsx` — inner sub-tabs (Smart, Peers, Chat, Blast, Account, Billing) with BLE-simulated UI, JazzCash billing flow
+7. Add "Smart" to main TABS array in HomeScreen
+8. Create crystal emoji picker component for Text Note compose
+9. Update `AdminScreen.tsx` — update summary board with management stats
+10. Wire App navigation (add AppSettingsScreen to App.tsx)

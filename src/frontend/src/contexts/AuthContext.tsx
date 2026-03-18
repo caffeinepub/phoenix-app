@@ -1,17 +1,23 @@
 import {
+  blockUser,
   deleteUserAccount,
   generatePaymentId,
   getAllUsers,
   getUser,
+  incrementFailedLogin,
+  logSecurityEvent,
   loginUser,
   registerUser,
+  resetFailedLogins,
   resetPassword,
   updateUser,
 } from "@/services/PhonexDB";
 import type { PhonexUser } from "@/services/PhonexDB";
 import { type ReactNode, createContext, useContext, useState } from "react";
 
-// Legacy shape kept for backward compat with existing screens
+const ADMIN_EMAIL = "admin@phonex.app";
+const ADMIN_PASSWORD = "admin123";
+
 export interface UserData {
   paymentId: string;
   email: string;
@@ -26,13 +32,13 @@ export interface UserData {
 
 interface AuthContextType {
   currentUser: UserData | null;
+  isAdmin: boolean;
   login: (email: string, password: string) => boolean;
   register: (user: Omit<UserData, "paymentId">) => void;
   logout: () => void;
   deleteAccount: () => void;
   updateProfile: (data: Partial<UserData>) => void;
   forgotPassword: (email: string) => boolean;
-  // also expose paymentId helper
   paymentId: string | null;
 }
 
@@ -71,19 +77,86 @@ function dbUserToUserData(u: PhonexUser): UserData {
   };
 }
 
+const ADMIN_USER_DATA: UserData = {
+  paymentId: "ADMIN-001",
+  email: ADMIN_EMAIL,
+  phone: "+92300000000",
+  countryCode: "+92",
+  displayName: "Admin",
+  password: ADMIN_PASSWORD,
+  avatarUrl: "",
+};
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserData | null>(loadSession);
 
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
   const login = (email: string, password: string): boolean => {
+    // Admin hardcoded login
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      setCurrentUser(ADMIN_USER_DATA);
+      saveSession(ADMIN_USER_DATA);
+      resetFailedLogins(email);
+      return true;
+    }
+
+    // Regular user login
     const user = loginUser(email, password);
     if (user) {
+      if (user.blocked) {
+        logSecurityEvent({
+          id: `evt_${Date.now()}`,
+          type: "blocked_attempt",
+          email,
+          timestamp: Date.now(),
+          details: `Blocked user attempted login: ${email}`,
+        });
+        return false;
+      }
       const ud = dbUserToUserData(user);
       setCurrentUser(ud);
       saveSession(ud);
+      resetFailedLogins(email);
       return true;
     }
+
+    // Failed login
+    const failedCount = incrementFailedLogin(email);
+    logSecurityEvent({
+      id: `evt_${Date.now()}`,
+      type: "failed_login",
+      email,
+      timestamp: Date.now(),
+      details: `Failed login attempt #${failedCount} for ${email}`,
+    });
+
+    if (failedCount >= 5) {
+      // Auto-lock the account
+      const users = getAllUsers();
+      const target = users.find((u) => u.email === email);
+      if (target) {
+        blockUser(target.paymentId);
+        logSecurityEvent({
+          id: `evt_${Date.now() + 1}`,
+          type: "account_locked",
+          email,
+          timestamp: Date.now(),
+          details: `Account auto-locked after ${failedCount} failed login attempts`,
+        });
+      } else {
+        logSecurityEvent({
+          id: `evt_${Date.now() + 1}`,
+          type: "suspicious_activity",
+          email,
+          timestamp: Date.now(),
+          details: `${failedCount} failed login attempts for unknown account: ${email}`,
+        });
+      }
+    }
+
     return false;
   };
 
@@ -137,15 +210,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /**
-   * Reset password to the user's phone number.
-   * Returns true if a matching account was found.
-   */
   const forgotPassword = (email: string): boolean => {
     const users = getAllUsers();
     const user = users.find((u) => u.email === email);
     if (!user) return false;
-    // Reset password to the user's phone number
     return resetPassword(email, user.phone);
   };
 
@@ -153,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         currentUser,
+        isAdmin,
         login,
         register,
         logout,

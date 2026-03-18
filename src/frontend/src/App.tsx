@@ -3,13 +3,22 @@ import { useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { SyncProvider } from "./contexts/SyncContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import AdminScreen from "./screens/AdminScreen";
+import AppSettingsScreen from "./screens/AppSettingsScreen";
 import HomeScreen from "./screens/HomeScreen";
 import LoginScreen from "./screens/LoginScreen";
 import PrivacyPolicyScreen from "./screens/PrivacyPolicyScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 
-type Screen = "login" | "register" | "home" | "profile" | "privacy";
+type Screen =
+  | "login"
+  | "register"
+  | "home"
+  | "profile"
+  | "privacy"
+  | "admin"
+  | "settings";
 
 function AppInner() {
   const [screen, setScreen] = useState<Screen>("login");
@@ -40,6 +49,7 @@ function AppInner() {
         <HomeScreen
           onLogout={() => navigate("login")}
           onNavigateProfile={() => navigate("profile")}
+          onNavigateAdmin={() => navigate("admin")}
         />
       )}
       {screen === "profile" && (
@@ -47,10 +57,15 @@ function AppInner() {
           onBack={() => navigate("home")}
           onLogout={() => navigate("login")}
           onPrivacyPolicy={() => navigate("privacy")}
+          onAppSettings={() => navigate("settings")}
         />
       )}
       {screen === "privacy" && (
         <PrivacyPolicyScreen onBack={() => setScreen(prevScreen)} />
+      )}
+      {screen === "admin" && <AdminScreen onBack={() => navigate("home")} />}
+      {screen === "settings" && (
+        <AppSettingsScreen onBack={() => navigate("profile")} />
       )}
 
       <Toaster />

@@ -22,11 +22,13 @@ import {
   CreditCard,
   FileText,
   Globe,
+  Lock,
   LogOut,
   Mail,
   Moon,
   Phone,
   Settings,
+  Settings2,
   Sun,
   Trash2,
 } from "lucide-react";
@@ -40,12 +42,14 @@ interface Props {
   onBack: () => void;
   onLogout: () => void;
   onPrivacyPolicy: () => void;
+  onAppSettings?: () => void;
 }
 
 export default function ProfileScreen({
   onBack,
   onLogout,
   onPrivacyPolicy,
+  onAppSettings,
 }: Props) {
   const { currentUser, updateProfile, logout, deleteAccount } = useAuth();
   const { isDark, darkNameColor, setDarkNameColor } = useTheme();
@@ -61,13 +65,43 @@ export default function ProfileScreen({
     ibanNumber: currentUser?.ibanNumber || "",
   });
   const [copied, setCopied] = useState(false);
+  const [pwdForm, setPwdForm] = useState({
+    current: "",
+    newPwd: "",
+    confirm: "",
+  });
 
   const initials = currentUser?.displayName
     ? currentUser.displayName.slice(0, 2).toUpperCase()
     : currentUser?.email?.slice(0, 2).toUpperCase() || "?";
 
   const handleSave = () => {
-    updateProfile({ ...form, avatarUrl: avatarUrl ?? undefined });
+    if (pwdForm.current || pwdForm.newPwd || pwdForm.confirm) {
+      if (!pwdForm.current) {
+        toast.error("Enter your current password");
+        return;
+      }
+      if (pwdForm.current !== currentUser?.password) {
+        toast.error("Current password is incorrect");
+        return;
+      }
+      if (pwdForm.newPwd.length < 4) {
+        toast.error("New password must be at least 4 characters");
+        return;
+      }
+      if (pwdForm.newPwd !== pwdForm.confirm) {
+        toast.error("New passwords do not match");
+        return;
+      }
+      updateProfile({
+        ...form,
+        avatarUrl: avatarUrl ?? undefined,
+        password: pwdForm.newPwd,
+      });
+      setPwdForm({ current: "", newPwd: "", confirm: "" });
+    } else {
+      updateProfile({ ...form, avatarUrl: avatarUrl ?? undefined });
+    }
     setEditing(false);
     toast.success("Profile saved! ✓");
   };
@@ -267,6 +301,43 @@ export default function ProfileScreen({
             )}
           </div>
 
+          {editing && (
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Lock className="w-4 h-4 text-primary" />
+                Change Password
+              </p>
+              <div className="space-y-2">
+                <Input
+                  data-ocid="profile.pwd_current.input"
+                  type="password"
+                  value={pwdForm.current}
+                  onChange={(e) =>
+                    setPwdForm((p) => ({ ...p, current: e.target.value }))
+                  }
+                  placeholder="Current password"
+                />
+                <Input
+                  data-ocid="profile.pwd_new.input"
+                  type="password"
+                  value={pwdForm.newPwd}
+                  onChange={(e) =>
+                    setPwdForm((p) => ({ ...p, newPwd: e.target.value }))
+                  }
+                  placeholder="New password"
+                />
+                <Input
+                  data-ocid="profile.pwd_confirm.input"
+                  type="password"
+                  value={pwdForm.confirm}
+                  onChange={(e) =>
+                    setPwdForm((p) => ({ ...p, confirm: e.target.value }))
+                  }
+                  placeholder="Confirm new password"
+                />
+              </div>
+            </div>
+          )}
           <div className="border-t border-border pt-4 space-y-4">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
@@ -362,6 +433,18 @@ export default function ProfileScreen({
               Account Settings
             </p>
 
+            {onAppSettings && (
+              <Button
+                type="button"
+                data-ocid="profile.settings.button"
+                variant="outline"
+                className="w-full flex items-center gap-2 justify-start text-foreground border-border hover:bg-muted/60"
+                onClick={onAppSettings}
+              >
+                <Settings2 className="w-4 h-4 text-primary" />
+                App Settings
+              </Button>
+            )}
             <Button
               type="button"
               data-ocid="profile.privacy.button"

@@ -132,6 +132,89 @@ const SAMPLE_EMAILS = [
   },
 ];
 
+// Save Email inline form
+function SaveEmailInline() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+
+  function handleSave() {
+    if (!name.trim() || !email.trim()) return;
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("phonex_email_contacts") || "[]",
+      );
+      localStorage.setItem(
+        "phonex_email_contacts",
+        JSON.stringify([
+          { id: `ec-${Date.now()}`, name: name.trim(), email: email.trim() },
+          ...existing,
+        ]),
+      );
+      toast.success("Email contact saved!");
+    } catch {}
+    setName("");
+    setEmail("");
+    setOpen(false);
+  }
+
+  return (
+    <div className="px-4 pb-2">
+      {!open ? (
+        <button
+          type="button"
+          data-ocid="email.save_email.button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Save Email Address
+        </button>
+      ) : (
+        <div className="border border-border rounded-2xl p-3 space-y-2 bg-card">
+          <p className="text-xs font-bold text-foreground">
+            Save Email Contact
+          </p>
+          <Input
+            data-ocid="email.save_name.input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name"
+            className="h-8 text-sm"
+          />
+          <Input
+            data-ocid="email.save_email_addr.input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            className="h-8 text-sm"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              data-ocid="email.save_email_submit.button"
+              onClick={handleSave}
+              disabled={!name.trim() || !email.trim()}
+              className="flex-1 h-7 text-xs"
+            >
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              data-ocid="email.save_email_cancel.button"
+              onClick={() => setOpen(false)}
+              className="h-7 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function EmailTab() {
   const { currentUser } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
@@ -286,6 +369,7 @@ export default function EmailTab() {
         </div>
       </div>
 
+      <SaveEmailInline />
       <div className="flex-1 overflow-y-auto" data-ocid="email.list">
         {SAMPLE_EMAILS.map((email, idx) => (
           <motion.div

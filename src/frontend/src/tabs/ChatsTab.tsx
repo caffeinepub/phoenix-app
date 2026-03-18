@@ -36,6 +36,26 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useGetChats } from "../hooks/useQueries";
 
+// Crystal Emoji Picker
+function CrystalEmojiPicker({ onPick }: { onPick: (e: string) => void }) {
+  const CRYSTALS = ["💎", "🔮", "✨", "⚡", "🌟", "💫", "🌈", "🔷", "🔹", "🌀"];
+  return (
+    <div className="flex gap-1.5 overflow-x-auto scrollbar-hide py-1">
+      {CRYSTALS.map((emoji) => (
+        <button
+          key={emoji}
+          type="button"
+          onClick={() => onPick(emoji)}
+          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-lg hover:bg-primary/10 transition-all hover:scale-110 active:scale-95 border border-transparent hover:border-primary/20"
+          style={{ filter: "drop-shadow(0 0 4px rgba(99,102,241,0.4))" }}
+        >
+          {emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const SAMPLE_CHATS = [
   {
     contact: "Jason",
@@ -443,30 +463,35 @@ function ChatConversation({
 
         {/* Text mode */}
         {mode === "text" && (
-          <div className="flex items-end gap-2">
-            <textarea
-              data-ocid="chats.text.textarea"
-              className="flex-1 resize-none bg-secondary rounded-2xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:border-primary min-h-[38px] max-h-24"
-              placeholder="Type a message..."
-              rows={1}
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  sendText();
-                }
-              }}
+          <div className="flex flex-col gap-1">
+            <CrystalEmojiPicker
+              onPick={(e) => setTextInput((prev) => prev + e)}
             />
-            <Button
-              size="icon"
-              onClick={sendText}
-              data-ocid="chats.text.submit_button"
-              disabled={!textInput.trim()}
-              className="rounded-full w-9 h-9 phoenix-gradient flex-shrink-0"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
+            <div className="flex items-end gap-2">
+              <textarea
+                data-ocid="chats.text.textarea"
+                className="flex-1 resize-none bg-secondary rounded-2xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:border-primary min-h-[38px] max-h-24"
+                placeholder="Type a message..."
+                rows={1}
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendText();
+                  }
+                }}
+              />
+              <Button
+                size="icon"
+                onClick={sendText}
+                data-ocid="chats.text.submit_button"
+                disabled={!textInput.trim()}
+                className="rounded-full w-9 h-9 phoenix-gradient flex-shrink-0"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
 
@@ -1204,6 +1229,103 @@ function NewNoteDialog({
   );
 }
 
+// Inline new contact form for the contacts sheet
+function NewContactInline({ onAdd }: { onAdd: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phonexId, setPhonexId] = useState("");
+  const [phone, setPhone] = useState("");
+
+  function handleSave() {
+    if (!name.trim()) return;
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("phonex_contacts") || "[]",
+      );
+      const newContact = {
+        id: `c-${Date.now()}`,
+        name: name.trim(),
+        phonexId: phonexId.trim(),
+        phone: phone.trim(),
+        initials: name.trim().slice(0, 2).toUpperCase(),
+        color: "bg-blue-500",
+        createdAt: Date.now(),
+      };
+      localStorage.setItem(
+        "phonex_contacts",
+        JSON.stringify([newContact, ...existing]),
+      );
+      toast.success("Contact saved!");
+    } catch {}
+    setName("");
+    setPhonexId("");
+    setPhone("");
+    setOpen(false);
+    onAdd();
+  }
+
+  return (
+    <div className="mb-2">
+      {!open ? (
+        <button
+          type="button"
+          data-ocid="chats.new_contact.button"
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          New Contact
+        </button>
+      ) : (
+        <div className="border border-border rounded-2xl p-3 space-y-2 bg-card">
+          <p className="text-xs font-bold text-foreground">New Contact</p>
+          <Input
+            data-ocid="chats.contact_name.input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name *"
+            className="h-8 text-sm"
+          />
+          <Input
+            data-ocid="chats.contact_phonexid.input"
+            value={phonexId}
+            onChange={(e) => setPhonexId(e.target.value)}
+            placeholder="Phonex ID (optional)"
+            className="h-8 text-sm"
+          />
+          <Input
+            data-ocid="chats.contact_phone.input"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone (optional)"
+            className="h-8 text-sm"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              data-ocid="chats.contact_save.button"
+              onClick={handleSave}
+              disabled={!name.trim()}
+              className="flex-1 h-7 text-xs"
+            >
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              data-ocid="chats.contact_cancel.button"
+              onClick={() => setOpen(false)}
+              className="h-7 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ChatsTab() {
   const { currentUser } = useAuth();
   const { data: backendChats } = useGetChats();
@@ -1413,6 +1535,7 @@ export default function ChatsTab() {
             </div>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
+            <NewContactInline onAdd={() => {}} />
             {dynamicContacts.map((contact, idx) => (
               <motion.div
                 key={contact.id}
