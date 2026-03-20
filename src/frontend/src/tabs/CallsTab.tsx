@@ -23,6 +23,7 @@ import {
   PhoneMissed,
   PhoneOutgoing,
   Plus,
+  UserPlus,
   Users,
   Video,
   X,
@@ -433,6 +434,102 @@ function NewCallDialog({
   );
 }
 
+// ── New Contact Inline ────────────────────────────────────────────────────────
+function CallsNewContactInline({ onAdd }: { onAdd: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phonexId, setPhonexId] = useState("");
+  const [phone, setPhone] = useState("");
+
+  function handleSave() {
+    if (!name.trim()) return;
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("phonex_contacts") || "[]",
+      );
+      const newContact = {
+        id: `c-${Date.now()}`,
+        name: name.trim(),
+        phonexId: phonexId.trim(),
+        phone: phone.trim(),
+        initials: name.trim().slice(0, 2).toUpperCase(),
+        color: "bg-teal-500",
+        createdAt: Date.now(),
+      };
+      localStorage.setItem(
+        "phonex_contacts",
+        JSON.stringify([newContact, ...existing]),
+      );
+      toast.success("Contact saved!");
+    } catch {}
+    setName("");
+    setPhonexId("");
+    setPhone("");
+    setOpen(false);
+    onAdd();
+  }
+
+  return (
+    <div className="mb-2">
+      {!open ? (
+        <button
+          type="button"
+          data-ocid="calls.new_contact.button"
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          New Contact
+        </button>
+      ) : (
+        <div className="border border-border rounded-2xl p-3 space-y-2 bg-card">
+          <p className="text-xs font-bold text-foreground">New Contact</p>
+          <Input
+            data-ocid="calls.contact_name.input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name *"
+            className="h-8 text-sm"
+          />
+          <Input
+            data-ocid="calls.contact_phonexid.input"
+            value={phonexId}
+            onChange={(e) => setPhonexId(e.target.value)}
+            placeholder="Phonex ID / Email"
+            className="h-8 text-sm"
+          />
+          <Input
+            data-ocid="calls.contact_phone.input"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone Number"
+            className="h-8 text-sm"
+          />
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              data-ocid="calls.new_contact.save_button"
+              onClick={handleSave}
+              disabled={!name.trim()}
+              className="flex-1 text-xs py-1.5 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              data-ocid="calls.new_contact.cancel_button"
+              onClick={() => setOpen(false)}
+              className="px-3 text-xs py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/70 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CallsTab() {
   const { currentUser } = useAuth();
   const dbContacts = currentUser?.paymentId
@@ -639,6 +736,7 @@ export default function CallsTab() {
               Contacts
             </SheetTitle>
           </SheetHeader>
+          <CallsNewContactInline onAdd={() => {}} />
           <div className="flex flex-col gap-2">
             {dynamicContacts.map((contact, idx) => (
               <div

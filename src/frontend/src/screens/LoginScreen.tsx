@@ -91,11 +91,31 @@ export default function LoginScreen({
           transition={{ duration: 0.5 }}
           className="flex flex-col items-center text-center"
         >
-          <img
-            src={phonexLogo}
-            alt="Phonex Logo"
-            className="w-20 h-20 object-contain drop-shadow-lg mb-4 rounded-full"
-          />
+          {/* Logo with blue glow drop-shadow */}
+          <motion.div
+            animate={{
+              filter: [
+                "drop-shadow(0 0 8px rgba(96,165,250,0.7)) drop-shadow(0 0 16px rgba(96,165,250,0.4))",
+                "drop-shadow(0 0 12px rgba(147,197,253,0.8)) drop-shadow(0 0 24px rgba(96,165,250,0.5))",
+                "drop-shadow(0 0 8px rgba(96,165,250,0.7)) drop-shadow(0 0 16px rgba(96,165,250,0.4))",
+              ],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Number.POSITIVE_INFINITY,
+              ease: "easeInOut",
+            }}
+          >
+            <img
+              src={phonexLogo}
+              alt="Phonex Logo"
+              className="w-20 h-20 object-contain mb-4 rounded-full"
+              style={{
+                border: "2px solid rgba(96,165,250,0.5)",
+                boxShadow: "0 4px 20px rgba(96,165,250,0.3)",
+              }}
+            />
+          </motion.div>
           <h1
             className="font-display text-4xl font-black tracking-tight"
             style={{
@@ -115,18 +135,18 @@ export default function LoginScreen({
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex-1 bg-background rounded-t-3xl -mt-6 px-6 pt-8 pb-6 flex flex-col gap-6"
+        className="flex-1 bg-background rounded-t-3xl -mt-6 px-6 pt-8 pb-6 flex flex-col gap-5"
       >
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">
             Welcome back
           </h2>
-          <p className="text-muted-foreground text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1 opacity-90">
             Sign in to continue
           </p>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-foreground font-medium">
               Email or Phone
@@ -189,7 +209,7 @@ export default function LoginScreen({
           data-ocid="login.primary_button"
           onClick={handleLogin}
           disabled={isLoading}
-          className="w-full h-12 phoenix-gradient text-primary-foreground font-display font-bold text-base rounded-xl border-0 hover:opacity-90 transition-opacity"
+          className="w-full h-12 phoenix-gradient text-primary-foreground font-display font-bold text-base rounded-xl border-0 hover:opacity-90 active:scale-[0.98] transition-all duration-150"
         >
           {isLoading ? "Signing in..." : "Sign In"}
         </Button>
@@ -208,7 +228,7 @@ export default function LoginScreen({
           </button>
         </div>
 
-        <div className="text-center pt-2">
+        <div className="text-center pt-1">
           <button
             type="button"
             data-ocid="login.privacy.link"
@@ -240,7 +260,7 @@ export default function LoginScreen({
               <Button
                 data-ocid="login.forgot_dialog.close_button"
                 onClick={handleForgotClose}
-                className="w-full phoenix-gradient text-primary-foreground border-0 rounded-xl"
+                className="w-full phoenix-gradient text-primary-foreground border-0 rounded-xl active:scale-[0.97] transition-transform"
               >
                 Got it
               </Button>
@@ -271,7 +291,7 @@ export default function LoginScreen({
                   data-ocid="login.forgot_dialog.cancel_button"
                   variant="outline"
                   onClick={handleForgotClose}
-                  className="flex-1 rounded-xl"
+                  className="flex-1 rounded-xl active:scale-[0.97] transition-transform"
                 >
                   Cancel
                 </Button>
@@ -280,7 +300,7 @@ export default function LoginScreen({
                   data-ocid="login.forgot_submit.button"
                   onClick={handleForgotSubmit}
                   disabled={!forgotEmail.trim()}
-                  className="flex-1 phoenix-gradient text-primary-foreground border-0 rounded-xl"
+                  className="flex-1 phoenix-gradient text-primary-foreground border-0 rounded-xl active:scale-[0.97] transition-transform"
                 >
                   Reset Password
                 </Button>

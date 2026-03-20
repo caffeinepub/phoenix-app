@@ -145,42 +145,42 @@ function DashboardTab({
       value: stats.textNotes,
       icon: MessageSquare,
       color: "#3b82f6",
-      bg: "rgba(59,130,246,0.15)",
+      bg: "rgba(59,130,246,0.12)",
     },
     {
       label: "Voice Notes",
       value: stats.voiceNotes,
       icon: Mic,
       color: "#22c55e",
-      bg: "rgba(34,197,94,0.15)",
+      bg: "rgba(34,197,94,0.12)",
     },
     {
       label: "Video Notes",
       value: stats.videoNotes,
       icon: Video,
       color: "#a855f7",
-      bg: "rgba(168,85,247,0.15)",
+      bg: "rgba(168,85,247,0.12)",
     },
     {
       label: "Emails",
       value: stats.emails,
       icon: Mail,
       color: "#f97316",
-      bg: "rgba(249,115,22,0.15)",
+      bg: "rgba(249,115,22,0.12)",
     },
     {
       label: "Feels",
       value: stats.feels,
       icon: Sparkles,
       color: "#ec4899",
-      bg: "rgba(236,72,153,0.15)",
+      bg: "rgba(236,72,153,0.12)",
     },
     {
       label: "Calls",
       value: stats.calls,
       icon: Phone,
       color: "#14b8a6",
-      bg: "rgba(20,184,166,0.15)",
+      bg: "rgba(20,184,166,0.12)",
     },
   ];
 
@@ -229,9 +229,9 @@ function DashboardTab({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.35 }}
-          className="text-sm mt-1"
+          className="text-sm mt-1 opacity-90"
           style={{
-            color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,45,107,0.6)",
+            color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,45,107,0.65)",
           }}
         >
           Welcome, <span className="font-semibold">{userName}</span>
@@ -245,13 +245,13 @@ function DashboardTab({
         transition={{ delay: 0.4 }}
         className="mx-4 rounded-2xl overflow-hidden"
         style={{
-          background: isDark ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.9)",
+          background: isDark ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.95)",
           border: isDark
             ? "1px solid rgba(96,165,250,0.3)"
-            : "1px solid rgba(15,45,107,0.15)",
+            : "1px solid rgba(15,45,107,0.12)",
           boxShadow: isDark
-            ? "0 0 30px rgba(96,165,250,0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
-            : "0 4px 20px rgba(15,45,107,0.1)",
+            ? "0 0 30px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.05)"
+            : "0 2px 16px rgba(15,45,107,0.08)",
         }}
       >
         <div
@@ -259,10 +259,10 @@ function DashboardTab({
           style={{
             background: isDark
               ? "linear-gradient(90deg, rgba(59,130,246,0.2) 0%, rgba(168,85,247,0.1) 100%)"
-              : "linear-gradient(90deg, rgba(15,45,107,0.08) 0%, rgba(168,85,247,0.05) 100%)",
+              : "linear-gradient(90deg, rgba(15,45,107,0.06) 0%, rgba(168,85,247,0.04) 100%)",
             borderBottom: isDark
               ? "1px solid rgba(96,165,250,0.2)"
-              : "1px solid rgba(15,45,107,0.1)",
+              : "1px solid rgba(15,45,107,0.08)",
           }}
         >
           <p
@@ -282,12 +282,13 @@ function DashboardTab({
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 + idx * 0.06 }}
-                className="flex flex-col items-center gap-1.5 py-4 rounded-xl"
+                whileHover={{ scale: 1.02 }}
+                className="flex flex-col items-center gap-1.5 py-4 rounded-xl cursor-default transition-transform"
                 style={{ background: tile.bg }}
               >
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: `${tile.color}30` }}
+                  style={{ background: `${tile.color}25` }}
                 >
                   <Icon style={{ color: tile.color }} className="w-4 h-4" />
                 </div>
@@ -338,7 +339,7 @@ export default function HomeScreen({
   return (
     <div className="flex flex-col h-screen bg-background">
       <header className="phoenix-gradient px-4 shadow-lg">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3.5">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <motion.img
@@ -385,7 +386,7 @@ export default function HomeScreen({
                 type="button"
                 data-ocid="home.admin.button"
                 onClick={onNavigateAdmin}
-                className="w-9 h-9 rounded-full bg-blue-500/30 flex items-center justify-center hover:bg-blue-500/50 transition-colors"
+                className="w-8 h-8 rounded-full bg-blue-500/30 flex items-center justify-center hover:bg-blue-500/50 active:scale-[0.97] transition-all"
                 aria-label="Admin Portal"
                 title="Admin Portal"
               >
@@ -396,7 +397,7 @@ export default function HomeScreen({
               type="button"
               data-ocid="home.toggle"
               onClick={toggleTheme}
-              className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 active:scale-[0.97] transition-all"
               aria-label="Toggle theme"
             >
               {isDark ? (
@@ -410,7 +411,7 @@ export default function HomeScreen({
                 type="button"
                 data-ocid="home.secondary_button"
                 onClick={onNavigateProfile}
-                className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors relative"
+                className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 active:scale-[0.97] transition-all relative"
                 aria-label="Profile"
               >
                 {currentUser?.avatarUrl ? (
@@ -434,7 +435,7 @@ export default function HomeScreen({
               type="button"
               data-ocid="home.delete_button"
               onClick={() => setLogoutOpen(true)}
-              className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center hover:bg-red-400/50 transition-colors"
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-red-400/50 active:scale-[0.97] transition-all"
               aria-label="Logout"
             >
               <LogOut className="w-4 h-4 text-white" />
@@ -450,7 +451,7 @@ export default function HomeScreen({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.18 }}
             className="h-full overflow-y-auto"
           >
             {tabContent[activeTab]}
@@ -458,6 +459,7 @@ export default function HomeScreen({
         </AnimatePresence>
       </main>
 
+      {/* Tab Bar */}
       <nav className="bg-card border-t border-border shadow-lg">
         <div className="flex overflow-x-auto scrollbar-hide">
           {TABS.map((tab) => {
@@ -469,17 +471,17 @@ export default function HomeScreen({
                 key={tab.id}
                 data-ocid={`home.${tab.id}.tab`}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex-1 min-w-[52px] flex flex-col items-center gap-1 py-3 relative transition-colors"
+                className="flex-1 min-w-[46px] flex flex-col items-center gap-0.5 py-2.5 relative transition-colors active:scale-[0.95]"
               >
                 {isActive && (
                   <motion.div
                     layoutId="tab-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 phoenix-gradient rounded-full"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 phoenix-gradient rounded-full"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
                   />
                 )}
                 <Icon
-                  className={`w-5 h-5 transition-colors ${
+                  className={`w-[18px] h-[18px] transition-colors ${
                     isActive
                       ? tab.id === "feels"
                         ? "text-pink-500"
@@ -492,7 +494,7 @@ export default function HomeScreen({
                   }`}
                 />
                 <span
-                  className={`text-[10px] font-body transition-colors ${
+                  className={`text-[9px] font-body transition-colors leading-none ${
                     isActive
                       ? tab.id === "feels"
                         ? "text-pink-500 font-semibold"
@@ -527,7 +529,7 @@ export default function HomeScreen({
             <AlertDialogAction
               data-ocid="home.logout.confirm_button"
               onClick={onLogout}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 active:scale-[0.97] transition-transform"
             >
               Log Out
             </AlertDialogAction>
