@@ -31,6 +31,7 @@ import {
   Settings2,
   Sun,
   Trash2,
+  User,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
@@ -338,6 +339,7 @@ export default function ProfileScreen({
               </div>
             </div>
           )}
+
           <div className="border-t border-border pt-4 space-y-4">
             <p className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
@@ -432,6 +434,55 @@ export default function ProfileScreen({
               <Settings className="w-4 h-4 text-primary" />
               Account Settings
             </p>
+
+            {/* Shortcut buttons */}
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 rounded-xl font-semibold"
+              data-ocid="profile.change_password.button"
+              onClick={() => {
+                setEditing(true);
+                setTimeout(() => {
+                  document
+                    .querySelector('[data-ocid="profile.pwd_current.input"]')
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }, 150);
+              }}
+            >
+              <Lock className="w-4 h-4 text-primary" /> Change Password
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 rounded-xl font-semibold"
+              data-ocid="profile.edit_name.button"
+              onClick={() => {
+                setEditing(true);
+                setTimeout(() => {
+                  (
+                    document.querySelector(
+                      '[data-ocid="profile.name.input"]',
+                    ) as HTMLInputElement
+                  )?.focus();
+                }, 150);
+              }}
+            >
+              <User className="w-4 h-4 text-primary" /> Edit Name
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 rounded-xl font-semibold"
+              data-ocid="profile.bank_details.button"
+              onClick={() => {
+                setEditing(true);
+                setTimeout(() => {
+                  document
+                    .querySelector('[data-ocid="profile.bank.input"]')
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }, 150);
+              }}
+            >
+              <CreditCard className="w-4 h-4 text-primary" /> Bank Details
+            </Button>
 
             {onAppSettings && (
               <Button

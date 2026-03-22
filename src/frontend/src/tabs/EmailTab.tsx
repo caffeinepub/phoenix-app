@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { sendEmail as dbSendEmail, getContacts } from "@/services/PhonexDB";
+import { sendEmail as dbSendEmail } from "@/services/PhonexDB";
 import {
   ChevronDown,
   ChevronUp,
@@ -133,13 +133,20 @@ const SAMPLE_EMAILS = [
 ];
 
 // Save Email inline form
-function SaveEmailInline() {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
+function SaveEmailInline({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
   function handleSave() {
-    if (!name.trim() || !email.trim()) return;
+    if (!firstName.trim() || !email.trim()) return;
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     try {
       const existing = JSON.parse(
         localStorage.getItem("phonex_email_contacts") || "[]",
@@ -147,70 +154,69 @@ function SaveEmailInline() {
       localStorage.setItem(
         "phonex_email_contacts",
         JSON.stringify([
-          { id: `ec-${Date.now()}`, name: name.trim(), email: email.trim() },
+          { id: `ec-${Date.now()}`, name: fullName, email: email.trim() },
           ...existing,
         ]),
       );
       toast.success("Email contact saved!");
     } catch {}
-    setName("");
+    setFirstName("");
+    setLastName("");
     setEmail("");
-    setOpen(false);
+    onClose();
   }
 
+  if (!open) return null;
+
   return (
-    <div className="px-4 pb-2">
-      {!open ? (
-        <button
-          type="button"
-          data-ocid="email.save_email.button"
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-primary/30 bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> Save Email Address
-        </button>
-      ) : (
-        <div className="border border-border rounded-2xl p-3 space-y-2 bg-card">
-          <p className="text-xs font-bold text-foreground">
-            Save Email Contact
-          </p>
+    <div className="px-4 pb-3">
+      <div className="border border-border rounded-2xl p-3 space-y-2 bg-card">
+        <p className="text-xs font-bold text-foreground">Save Email Contact</p>
+        <div className="flex gap-2">
           <Input
-            data-ocid="email.save_name.input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name"
+            data-ocid="email.save_firstname.input"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First Name *"
             className="h-8 text-sm"
           />
           <Input
-            data-ocid="email.save_email_addr.input"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="email@example.com"
+            data-ocid="email.save_lastname.input"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Last Name"
             className="h-8 text-sm"
           />
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              data-ocid="email.save_email_submit.button"
-              onClick={handleSave}
-              disabled={!name.trim() || !email.trim()}
-              className="flex-1 h-7 text-xs"
-            >
-              Save
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              data-ocid="email.save_email_cancel.button"
-              onClick={() => setOpen(false)}
-              className="h-7 text-xs"
-            >
-              Cancel
-            </Button>
-          </div>
         </div>
-      )}
+        <Input
+          data-ocid="email.save_email_addr.input"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@example.com *"
+          className="h-8 text-sm"
+        />
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            data-ocid="email.save_email_submit.button"
+            onClick={handleSave}
+            disabled={!firstName.trim() || !email.trim()}
+            className="flex-1 h-7 text-xs"
+          >
+            Save
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            data-ocid="email.save_email_cancel.button"
+            onClick={onClose}
+            className="h-7 text-xs"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -218,6 +224,7 @@ function SaveEmailInline() {
 export default function EmailTab() {
   const { currentUser } = useAuth();
   const [composeOpen, setComposeOpen] = useState(false);
+  const [saveEmailOpen, setSaveEmailOpen] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
   const [bcc, setBcc] = useState("");
@@ -308,14 +315,12 @@ export default function EmailTab() {
     setAttachments((prev) => prev.filter((a) => a.id !== id));
   }
 
-  // Select contact from header contacts sheet → pre-fill To and open compose
   function handleHeaderContactSelect(email: string) {
     setTo(email);
     setHeaderContactsOpen(false);
     setComposeOpen(true);
   }
 
-  // Select contact from compose contacts dialog → fill To field
   function handleComposeContactSelect(email: string) {
     setTo(email);
     setComposeContactsOpen(false);
@@ -343,33 +348,39 @@ export default function EmailTab() {
             <Users className="w-4 h-4" />
             Contacts
           </button>
+          {/* Two pill buttons: New Email + Save Email */}
           <button
             type="button"
-            data-ocid="email.primary_button"
-            onClick={() => setComposeOpen(true)}
-            className="w-9 h-9 rounded-full phoenix-gradient flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all"
+            data-ocid="email.new_email.button"
+            onClick={() => {
+              setComposeOpen(true);
+              setSaveEmailOpen(false);
+            }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
           >
-            <Plus className="w-5 h-5 text-primary-foreground" />
+            <Plus className="w-3.5 h-3.5" />
+            New Email
+          </button>
+          <button
+            type="button"
+            data-ocid="email.save_email.button"
+            onClick={() => {
+              setSaveEmailOpen((v) => !v);
+              setComposeOpen(false);
+            }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-primary text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
+          >
+            Save Email
           </button>
         </div>
       </div>
 
-      {/* Add Email row - Feels style */}
-      <div className="flex gap-3 overflow-x-auto px-4 pb-3 pt-1 scrollbar-hide border-b border-border/50">
-        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-          <button
-            type="button"
-            data-ocid="email.add.button"
-            onClick={() => setComposeOpen(true)}
-            className="w-14 h-14 rounded-full border-2 border-dashed border-primary/50 bg-primary/5 flex items-center justify-center hover:bg-primary/10 transition-colors"
-          >
-            <Plus className="w-6 h-6 text-primary" />
-          </button>
-          <span className="text-[10px] text-muted-foreground">New Email</span>
-        </div>
-      </div>
+      {/* Save Email inline form */}
+      <SaveEmailInline
+        open={saveEmailOpen}
+        onClose={() => setSaveEmailOpen(false)}
+      />
 
-      <SaveEmailInline />
       <div className="flex-1 overflow-y-auto" data-ocid="email.list">
         {SAMPLE_EMAILS.map((email, idx) => (
           <motion.div
@@ -670,7 +681,7 @@ export default function EmailTab() {
         </SheetContent>
       </Sheet>
 
-      {/* Header Contacts Sheet — tap contact to pre-fill compose and open it */}
+      {/* Header Contacts Sheet */}
       <Sheet open={headerContactsOpen} onOpenChange={setHeaderContactsOpen}>
         <SheetContent
           side="bottom"
@@ -714,7 +725,7 @@ export default function EmailTab() {
         </SheetContent>
       </Sheet>
 
-      {/* Compose Contacts Dialog — fills To field */}
+      {/* Compose Contacts Dialog */}
       <Dialog open={composeContactsOpen} onOpenChange={setComposeContactsOpen}>
         <DialogContent
           className="sm:max-w-sm"

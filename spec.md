@@ -1,28 +1,27 @@
-# Phonex
+# Phoenix App — Dead Code Cleanup & Performance Pass
 
 ## Current State
-Phonex is a React/TypeScript PWA with tabs: Home (Dashboard), Chats, Feels, Email, Pocket, Calls, Smart. Admin portal, Profile, AppSettings, PrivacyPolicy, Login, Register screens exist. PhonexDB (localStorage) + CloudSync layer. Crystal logo, lime green / dark blue theme. All PWABuilder manifest warnings resolved.
-
-Dead code still present as files:
-- `src/frontend/src/tabs/CodingTab.tsx` (unused)
-- `src/frontend/src/tabs/ClassTab.tsx` (unused)
-- `src/frontend/src/tabs/JobsTab.tsx` (unused)
-- `src/frontend/src/components/FlyingPhoenix.tsx` (unused)
+Phonex is a full-featured React/TypeScript PWA. All data is stored in localStorage via PhonexDB with a simulated cloud sync layer. The ICP backend actor is only used by useGetChats in ChatsTab (data never rendered). Several shadcn UI components are unused.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Nothing new
+- Nothing
 
 ### Modify
-- UI polish: tighter, cleaner, more attractive visual presentation across Login, Home dashboard, tab bar, and general spacing
-- Ensure logo (`/assets/uploads/Phonex-Icon-1-1.jpg`) and theme (lime green `phoenix-gradient`, dark blue) remain exactly as-is
+- ChatsTab.tsx: Remove useGetChats import and backendChats variable
+- main.tsx: Remove InternetIdentityProvider wrapper
 
 ### Remove
-- Delete `CodingTab.tsx`, `ClassTab.tsx`, `JobsTab.tsx`, `FlyingPhoenix.tsx` (all dead, no imports)
-- Any unused imports or variables caught by lint
+- hooks/useInternetIdentity.ts, hooks/useActor.ts, hooks/useQueries.ts
+- hooks/use-mobile.tsx if unused
+- Unused shadcn: chart, calendar, carousel, navigation-menu, menubar, context-menu, breadcrumb, input-otp, resizable, sidebar, aspect-ratio, toggle-group, hover-card, pagination (grep each first)
 
 ## Implementation Plan
-1. Delete 4 dead code files
-2. Polish UI: login screen header proportions, home dashboard card spacing, tab bar compact style, button hover states, overall visual tightness
-3. Run lint fix + build to confirm clean
+1. Grep each unused shadcn component to confirm zero imports, delete confirmed ones
+2. Remove useGetChats from ChatsTab.tsx
+3. Remove InternetIdentityProvider from main.tsx
+4. Delete unused hook files
+5. Run frontend_validate
+6. Do NOT touch StorageClient.ts, config.ts, backend.ts, backend.d.ts, declarations/
+7. Do NOT change any screen logic, UI layout, themes, or features

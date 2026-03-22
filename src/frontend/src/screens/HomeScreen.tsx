@@ -90,7 +90,6 @@ function SyncBadge() {
   );
 }
 
-// ── Stat count helper ──────────────────────────────────────────────────────────
 function getStatCount(key: string, filterFn?: (item: any) => boolean): number {
   try {
     const raw = localStorage.getItem(key);
@@ -103,12 +102,7 @@ function getStatCount(key: string, filterFn?: (item: any) => boolean): number {
   }
 }
 
-// ── Dashboard Tab ──────────────────────────────────────────────────────────────
-function DashboardTab({
-  userName,
-}: {
-  userName: string;
-}) {
+function DashboardTab({ userName }: { userName: string }) {
   const { isDark } = useTheme();
   const [stats, setStats] = useState({
     textNotes: 0,
@@ -145,42 +139,36 @@ function DashboardTab({
       value: stats.textNotes,
       icon: MessageSquare,
       color: "#3b82f6",
-      bg: "rgba(59,130,246,0.12)",
     },
     {
       label: "Voice Notes",
       value: stats.voiceNotes,
       icon: Mic,
       color: "#22c55e",
-      bg: "rgba(34,197,94,0.12)",
     },
     {
       label: "Video Notes",
       value: stats.videoNotes,
       icon: Video,
       color: "#a855f7",
-      bg: "rgba(168,85,247,0.12)",
     },
     {
       label: "Emails",
       value: stats.emails,
       icon: Mail,
       color: "#f97316",
-      bg: "rgba(249,115,22,0.12)",
     },
     {
       label: "Feels",
       value: stats.feels,
       icon: Sparkles,
       color: "#ec4899",
-      bg: "rgba(236,72,153,0.12)",
     },
     {
       label: "Calls",
       value: stats.calls,
       icon: Phone,
       color: "#14b8a6",
-      bg: "rgba(20,184,166,0.12)",
     },
   ];
 
@@ -284,16 +272,24 @@ function DashboardTab({
                 transition={{ delay: 0.5 + idx * 0.06 }}
                 whileHover={{ scale: 1.02 }}
                 className="flex flex-col items-center gap-1.5 py-4 rounded-xl cursor-default transition-transform"
-                style={{ background: tile.bg }}
+                style={{
+                  background: `linear-gradient(135deg, ${tile.color}20 0%, ${tile.color}08 100%)`,
+                  border: `1px solid ${tile.color}30`,
+                }}
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: `${tile.color}25` }}
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `${tile.color}25`,
+                    boxShadow: `0 0 12px 4px ${tile.color}50`,
+                    animation: "pulseGlowOuter 2s ease-in-out infinite",
+                    animationDelay: `${idx * 0.3}s`,
+                  }}
                 >
-                  <Icon style={{ color: tile.color }} className="w-4 h-4" />
+                  <Icon style={{ color: tile.color }} className="w-6 h-6" />
                 </div>
                 <span
-                  className="text-2xl font-black leading-none"
+                  className="text-3xl font-black leading-none"
                   style={{ color: tile.color }}
                 >
                   {tile.value}
@@ -315,7 +311,6 @@ function DashboardTab({
   );
 }
 
-// ── Main HomeScreen ────────────────────────────────────────────────────────────
 export default function HomeScreen({
   onLogout,
   onNavigateProfile,
@@ -471,7 +466,7 @@ export default function HomeScreen({
                 key={tab.id}
                 data-ocid={`home.${tab.id}.tab`}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex-1 min-w-[46px] flex flex-col items-center gap-0.5 py-2.5 relative transition-colors active:scale-[0.95]"
+                className="flex-1 min-w-[46px] flex flex-col items-center gap-0.5 py-2 relative transition-colors active:scale-[0.95]"
               >
                 {isActive && (
                   <motion.div
@@ -480,34 +475,47 @@ export default function HomeScreen({
                     transition={{ type: "spring", bounce: 0.2, duration: 0.35 }}
                   />
                 )}
-                <Icon
-                  className={`w-[18px] h-[18px] transition-colors ${
+                <div
+                  style={
                     isActive
-                      ? tab.id === "feels"
-                        ? "text-pink-500"
-                        : tab.id === "calls"
-                          ? "text-emerald-500"
-                          : tab.id === "home"
-                            ? "text-blue-500"
-                            : "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                />
-                <span
-                  className={`text-[9px] font-body transition-colors leading-none ${
-                    isActive
-                      ? tab.id === "feels"
-                        ? "text-pink-500 font-semibold"
-                        : tab.id === "calls"
-                          ? "text-emerald-500 font-semibold"
-                          : tab.id === "home"
-                            ? "text-blue-500 font-semibold"
-                            : "text-primary font-semibold"
-                      : "text-muted-foreground"
-                  }`}
+                      ? {
+                          background: "rgba(59,130,246,0.15)",
+                          borderRadius: "12px",
+                          padding: "4px 8px",
+                        }
+                      : { padding: "4px 8px" }
+                  }
+                  className="flex flex-col items-center gap-0.5"
                 >
-                  {tab.label}
-                </span>
+                  <Icon
+                    className={`w-[18px] h-[18px] transition-colors ${
+                      isActive
+                        ? tab.id === "feels"
+                          ? "text-pink-500"
+                          : tab.id === "calls"
+                            ? "text-emerald-500"
+                            : tab.id === "home"
+                              ? "text-blue-500"
+                              : "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  />
+                  <span
+                    className={`text-[9px] font-body transition-colors leading-none ${
+                      isActive
+                        ? tab.id === "feels"
+                          ? "text-pink-500 font-semibold"
+                          : tab.id === "calls"
+                            ? "text-emerald-500 font-semibold"
+                            : tab.id === "home"
+                              ? "text-blue-500 font-semibold"
+                              : "text-primary font-semibold"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </span>
+                </div>
               </button>
             );
           })}

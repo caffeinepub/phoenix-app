@@ -34,7 +34,6 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useGetChats } from "../hooks/useQueries";
 
 // Crystal Emoji Picker
 function CrystalEmojiPicker({ onPick }: { onPick: (e: string) => void }) {
@@ -1328,7 +1327,6 @@ function NewContactInline({ onAdd }: { onAdd: () => void }) {
 
 export default function ChatsTab() {
   const { currentUser } = useAuth();
-  const { data: backendChats } = useGetChats();
   const dbContacts = currentUser?.paymentId
     ? getContacts(currentUser.paymentId)
     : [];
@@ -1356,14 +1354,7 @@ export default function ChatsTab() {
     setNewMessageOpen(true);
   }
 
-  const chats =
-    backendChats && backendChats.length > 0
-      ? backendChats.map((c, i) => ({
-          ...c,
-          initials: c.contact.slice(0, 2).toUpperCase(),
-          color: SAMPLE_CHATS[i % SAMPLE_CHATS.length].color,
-        }))
-      : SAMPLE_CHATS;
+  const chats = SAMPLE_CHATS;
 
   const noteActions = [
     {

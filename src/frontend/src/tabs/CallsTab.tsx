@@ -269,7 +269,6 @@ function CallOverlay({ call, onEnd }: { call: ActiveCall; onEnd: () => void }) {
   );
 }
 
-// Contact Picker Dialog (inside NewCallDialog)
 function ContactPickerDialog({
   open,
   onClose,
@@ -323,7 +322,6 @@ function ContactPickerDialog({
   );
 }
 
-// New Call Dialog
 function NewCallDialog({
   open,
   onClose,
@@ -434,7 +432,6 @@ function NewCallDialog({
   );
 }
 
-// ── New Contact Inline ────────────────────────────────────────────────────────
 function CallsNewContactInline({ onAdd }: { onAdd: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -566,7 +563,7 @@ export default function CallsTab() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto relative">
-      {/* Header with prominent call buttons */}
+      {/* Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -585,28 +582,6 @@ export default function CallsTab() {
           >
             <Users className="w-4 h-4" />
             Contacts
-          </button>
-        </div>
-
-        {/* Prominent Voice & Video Call Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            data-ocid="calls.primary_button"
-            onClick={() => openNewCall("voice")}
-            className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base shadow-lg hover:bg-emerald-600 active:scale-95 transition-all"
-          >
-            <Phone className="w-5 h-5" />
-            Voice Call
-          </button>
-          <button
-            type="button"
-            data-ocid="calls.secondary_button"
-            onClick={() => openNewCall("video")}
-            className="flex items-center justify-center gap-2.5 py-4 rounded-2xl bg-blue-500 text-white font-bold text-base shadow-lg hover:bg-blue-600 active:scale-95 transition-all"
-          >
-            <Video className="w-5 h-5" />
-            Video Call
           </button>
         </div>
       </div>
