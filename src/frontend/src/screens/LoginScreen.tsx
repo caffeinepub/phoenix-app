@@ -238,6 +238,17 @@ export default function LoginScreen({
             Privacy Policy
           </button>
         </div>
+
+        <div className="text-center pt-1">
+          <a
+            href="https://www.hrdex.com.pk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground text-xs hover:underline"
+          >
+            www.hrdex.com.pk
+          </a>
+        </div>
       </motion.div>
 
       <Dialog open={forgotOpen} onOpenChange={handleForgotClose}>

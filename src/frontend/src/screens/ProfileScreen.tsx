@@ -16,7 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
+  Bell,
   Building2,
+  Camera,
   Check,
   Copy,
   CreditCard,
@@ -66,6 +68,8 @@ export default function ProfileScreen({
     ibanNumber: currentUser?.ibanNumber || "",
   });
   const [copied, setCopied] = useState(false);
+  const [_showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [pwdForm, setPwdForm] = useState({
     current: "",
     newPwd: "",
@@ -483,6 +487,54 @@ export default function ProfileScreen({
             >
               <CreditCard className="w-4 h-4 text-primary" /> Bank Details
             </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 rounded-xl font-semibold"
+              data-ocid="profile.change_picture.button"
+              onClick={() => {
+                setEditing(true);
+                setShowAvatarPicker(true);
+              }}
+            >
+              <Camera className="w-4 h-4 text-primary" /> Change Picture
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 rounded-xl font-semibold"
+              data-ocid="profile.notifications.button"
+              onClick={() => setNotifOpen((v) => !v)}
+            >
+              <Bell className="w-4 h-4 text-primary" /> Notification Settings
+            </Button>
+            {notifOpen && (
+              <div className="border border-border rounded-2xl p-4 space-y-3 bg-muted/30">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Notification Preferences
+                </p>
+                {[
+                  { label: "New Messages", key: "messages" },
+                  { label: "Calls", key: "calls" },
+                  { label: "Emails", key: "emails" },
+                  { label: "Feels & Reactions", key: "feels" },
+                ].map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="text-sm text-foreground">
+                      {item.label}
+                    </span>
+                    <button
+                      type="button"
+                      data-ocid={`profile.notif_${item.key}.toggle`}
+                      className="w-10 h-5 rounded-full bg-primary flex items-center px-0.5 transition-colors"
+                    >
+                      <span className="w-4 h-4 rounded-full bg-white shadow translate-x-5 transition-transform" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {onAppSettings && (
               <Button

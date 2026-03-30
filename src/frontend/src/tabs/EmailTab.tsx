@@ -348,19 +348,6 @@ export default function EmailTab() {
             <Users className="w-4 h-4" />
             Contacts
           </button>
-          {/* Two pill buttons: New Email + Save Email */}
-          <button
-            type="button"
-            data-ocid="email.new_email.button"
-            onClick={() => {
-              setComposeOpen(true);
-              setSaveEmailOpen(false);
-            }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New Email
-          </button>
           <button
             type="button"
             data-ocid="email.save_email.button"
@@ -439,6 +426,20 @@ export default function EmailTab() {
           </motion.div>
         ))}
       </div>
+
+      {/* FAB — Compose New Email */}
+      <button
+        type="button"
+        data-ocid="email.new_email.button"
+        onClick={() => {
+          setComposeOpen(true);
+          setSaveEmailOpen(false);
+        }}
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full phoenix-gradient shadow-xl flex items-center justify-center hover:opacity-90 active:scale-95 transition-all z-10"
+        aria-label="New email"
+      >
+        <Plus className="w-6 h-6 text-primary-foreground" />
+      </button>
 
       {/* Compose Sheet */}
       <Sheet open={composeOpen} onOpenChange={setComposeOpen}>

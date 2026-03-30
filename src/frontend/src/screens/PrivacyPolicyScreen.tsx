@@ -258,6 +258,17 @@ export default function PrivacyPolicyScreen({
                 Development Team
               </li>
               <li>
+                <strong className="text-foreground">Website:</strong>{" "}
+                <a
+                  href="https://www.hrdex.com.pk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  www.hrdex.com.pk
+                </a>
+              </li>
+              <li>
                 <strong className="text-foreground">Country:</strong> Pakistan
               </li>
             </ul>
@@ -268,7 +279,8 @@ export default function PrivacyPolicyScreen({
 
           <div className="pt-4 border-t">
             <p className="text-xs text-center text-muted-foreground">
-              &copy; 2026 Phonex. All rights reserved. | Made in Pakistan
+              &copy; 2026 Phonex by HRDex. All rights reserved. | Made in
+              Pakistan
             </p>
           </div>
         </div>

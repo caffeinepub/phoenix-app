@@ -839,6 +839,7 @@ function NewNoteDialog({
                       Select Contact
                     </DialogTitle>
                   </DialogHeader>
+                  <NewContactInline onAdd={() => {}} />
                   <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                     {SAMPLE_CONTACTS.map((contact, idx) => (
                       <button
@@ -957,6 +958,7 @@ function NewNoteDialog({
                         Select Contact
                       </DialogTitle>
                     </DialogHeader>
+                    <NewContactInline onAdd={() => {}} />
                     <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                       {SAMPLE_CONTACTS.map((contact, idx) => (
                         <button
@@ -1102,6 +1104,7 @@ function NewNoteDialog({
                         Select Contact
                       </DialogTitle>
                     </DialogHeader>
+                    <NewContactInline onAdd={() => {}} />
                     <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                       {SAMPLE_CONTACTS.map((contact, idx) => (
                         <button

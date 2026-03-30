@@ -352,33 +352,33 @@ function NewCallDialog({
             <DialogTitle className="font-display text-lg">New Call</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            {/* Call type toggle */}
-            <div className="flex gap-2">
+            {/* Call type toggle — compact */}
+            <div className="flex items-center gap-1 bg-muted/60 rounded-full p-1 self-start">
               <button
                 type="button"
                 data-ocid="calls.voice.toggle"
                 onClick={() => setKind("voice")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   kind === "voice"
-                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-600"
-                    : "border-border text-muted-foreground hover:border-emerald-500/40"
+                    ? "bg-emerald-500 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Phone className="w-4 h-4" />
-                Voice Call
+                <Phone className="w-3.5 h-3.5" />
+                Voice
               </button>
               <button
                 type="button"
                 data-ocid="calls.video.toggle"
                 onClick={() => setKind("video")}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   kind === "video"
-                    ? "border-blue-500 bg-blue-500/10 text-blue-600"
-                    : "border-border text-muted-foreground hover:border-blue-500/40"
+                    ? "bg-blue-500 text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Video className="w-4 h-4" />
-                Video Call
+                <Video className="w-3.5 h-3.5" />
+                Video
               </button>
             </div>
 
