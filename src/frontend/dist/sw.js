@@ -1,15 +1,24 @@
-const CACHE_NAME = 'phonex-v2';
+const CACHE_NAME = 'phonex-v3';
+const OFFLINE_URL = '/';
 const STATIC_ASSETS = [
   '/',
-  '/manifest.json',
-  '/assets/generated/phonex-icon-192.dim_192x192.png',
-  '/assets/generated/phonex-icon-512.dim_512x512.png'
+  '/manifest.json'
 ];
 
 // ── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      // Pre-cache core assets one by one so a single failure doesn't break all
+      for (const url of STATIC_ASSETS) {
+        try {
+          await cache.add(url);
+        } catch (e) {
+          // Ignore individual fetch failures during install
+        }
+      }
+    })()
   );
   self.skipWaiting();
 });
@@ -17,34 +26,91 @@ self.addEventListener('install', (event) => {
 // ── Activate ─────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-// ── Fetch (offline support + caching logic) ───────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
   if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api')) {
+
+  // Skip non-http(s) requests (chrome-extension, data:, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
+  // For API/ICP calls: network-first, no cache fallback needed
+  if (
+    url.pathname.startsWith('/api') ||
+    url.hostname.includes('icp') ||
+    url.hostname.includes('ic0.app')
+  ) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ error: 'offline' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
     );
     return;
   }
-  event.respondWith(
-    caches.match(event.request).then((cached) =>
-      cached ||
-      fetch(event.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+
+  // For navigation requests: network-first, fall back to cached '/'
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (e) {
+          const cached = await caches.match(OFFLINE_URL);
+          if (cached) return cached;
+          return new Response('Phonex is offline. Please check your connection.', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' }
+          });
         }
-        return response;
-      }).catch(() => caches.match('/') )
-    )
+      })()
+    );
+    return;
+  }
+
+  // For all other requests: cache-first, then network
+  event.respondWith(
+    (async () => {
+      const cached = await caches.match(event.request);
+      if (cached) return cached;
+
+      try {
+        const networkResponse = await fetch(event.request);
+        if (networkResponse && networkResponse.ok && networkResponse.status !== 206) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        }
+        return networkResponse;
+      } catch (e) {
+        // Return a fallback for images
+        if (event.request.destination === 'image') {
+          return new Response('', { status: 404, statusText: 'Not Found' });
+        }
+        // Return offline page for documents
+        const offlinePage = await caches.match(OFFLINE_URL);
+        if (offlinePage) return offlinePage;
+        return new Response('Offline', { status: 503 });
+      }
+    })()
   );
 });
 
@@ -76,20 +142,24 @@ self.addEventListener('periodicsync', (event) => {
 
 // ── Push Notifications ────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Phonex';
-  const options = {
-    body: data.body || 'You have a new notification.',
-    icon: '/assets/generated/phonex-icon-192.dim_192x192.png',
-    badge: '/assets/generated/phonex-icon-96.dim_96x96.png',
-    data: data.url || '/'
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+  try {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || 'Phonex';
+    const options = {
+      body: data.body || 'You have a new notification.',
+      icon: '/assets/generated/phonex-icon-192.dim_192x192.png',
+      badge: '/assets/generated/phonex-icon-192.dim_192x192.png',
+      data: data.url || '/'
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+  } catch (e) {
+    // Silently handle malformed push payloads
+  }
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data || '/';
+  const url = (event.notification.data) || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {
