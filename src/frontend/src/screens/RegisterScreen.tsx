@@ -11,16 +11,31 @@ import {
   Lock,
   Mail,
   Phone,
+  ShoppingBag,
+  Store,
+  Tag,
+  User,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import type { UserData } from "../contexts/AuthContext";
 
 interface Props {
   onBack: () => void;
   onRegisterSuccess: () => void;
   onPrivacyPolicy: () => void;
 }
+
+const CATEGORIES = [
+  "Clothing",
+  "Electronics",
+  "Food",
+  "Beauty",
+  "Home & Living",
+  "Sports",
+  "Other",
+];
 
 export default function RegisterScreen({
   onBack,
@@ -29,6 +44,7 @@ export default function RegisterScreen({
 }: Props) {
   const { register } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [role, setRole] = useState<"buyer" | "seller">("buyer");
   const [form, setForm] = useState({
     email: "",
     phone: "",
@@ -37,6 +53,8 @@ export default function RegisterScreen({
     password: "password",
     bankName: "",
     ibanNumber: "",
+    brandName: "",
+    category: "Clothing",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,14 +64,12 @@ export default function RegisterScreen({
 
   const handleRegister = async () => {
     setError("");
-    if (
-      !form.email ||
-      !form.phone ||
-      !form.password ||
-      !form.bankName ||
-      !form.ibanNumber
-    ) {
+    if (!form.email || !form.phone || !form.password) {
       setError("Please fill in all required fields");
+      return;
+    }
+    if (role === "seller" && !form.brandName) {
+      setError("Brand name is required for sellers");
       return;
     }
     if (form.password.length < 4) {
@@ -62,7 +78,19 @@ export default function RegisterScreen({
     }
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 500));
-    register({ ...form, avatarUrl: avatarUrl ?? undefined });
+    const userData: Omit<UserData, "id" | "paymentId"> = {
+      email: form.email,
+      phone: form.countryCode + form.phone,
+      displayName: form.displayName || form.email.split("@")[0],
+      password: form.password,
+      role,
+      bankName: form.bankName,
+      ibanNumber: form.ibanNumber,
+      avatarUrl: avatarUrl ?? undefined,
+      brandName: role === "seller" ? form.brandName : undefined,
+      category: role === "seller" ? form.category : undefined,
+    };
+    register(userData);
     setIsLoading(false);
     onRegisterSuccess();
   };
@@ -92,7 +120,7 @@ export default function RegisterScreen({
               Create Account
             </h1>
             <p className="text-primary-foreground/75 text-sm">
-              Join Phonex today
+              Join Phonex Business today
             </p>
           </div>
         </div>
@@ -104,6 +132,64 @@ export default function RegisterScreen({
         transition={{ duration: 0.4 }}
         className="flex-1 bg-background rounded-t-3xl -mt-4 px-6 pt-8 pb-8 flex flex-col gap-5"
       >
+        {/* Role Selector */}
+        <div className="space-y-2">
+          <Label className="text-foreground font-semibold text-sm">
+            I am joining as... <span className="text-destructive">*</span>
+          </Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              data-ocid="register.buyer.toggle"
+              onClick={() => setRole("buyer")}
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                role === "buyer"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted/20 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              <ShoppingBag className="w-7 h-7" />
+              <span className="font-bold text-sm">Buyer</span>
+              <span className="text-xs opacity-70 text-center">
+                Browse &amp; buy products
+              </span>
+            </button>
+            <button
+              type="button"
+              data-ocid="register.seller.toggle"
+              onClick={() => setRole("seller")}
+              className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${
+                role === "seller"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border bg-muted/20 text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              <Store className="w-7 h-7" />
+              <span className="font-bold text-sm">Seller / Brand</span>
+              <span className="text-xs opacity-70 text-center">
+                Advertise &amp; sell
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Seller subscription note */}
+        {role === "seller" && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3"
+          >
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+              🎁 <strong>1 month free trial</strong>, then PKR 1,000 minimum
+              balance required. Posts cost <strong>PKR 0.25/day each</strong> —
+              auto-deducted from your balance.
+            </p>
+          </motion.div>
+        )}
+
+        {/* Avatar */}
         <div className="bg-muted/30 rounded-2xl p-4">
           <p className="text-sm font-semibold text-foreground mb-3 text-center">
             Profile Picture
@@ -111,6 +197,7 @@ export default function RegisterScreen({
           <AvatarPicker value={avatarUrl} onChange={setAvatarUrl} />
         </div>
 
+        {/* Full Name */}
         <div className="space-y-1.5">
           <Label
             htmlFor="displayName"
@@ -118,15 +205,77 @@ export default function RegisterScreen({
           >
             Full Name
           </Label>
-          <Input
-            id="displayName"
-            data-ocid="register.input"
-            placeholder="Your full name"
-            value={form.displayName}
-            onChange={(e) => update("displayName", e.target.value)}
-          />
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="displayName"
+              data-ocid="register.input"
+              placeholder="Your full name"
+              className="pl-9"
+              value={form.displayName}
+              onChange={(e) => update("displayName", e.target.value)}
+            />
+          </div>
         </div>
 
+        {/* Seller-only fields */}
+        {role === "seller" && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4 border border-primary/20 bg-primary/5 rounded-2xl p-4"
+          >
+            <p className="text-sm font-semibold text-primary flex items-center gap-2">
+              <Store className="w-4 h-4" />
+              Brand Information
+            </p>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="brandName"
+                className="text-foreground font-semibold"
+              >
+                Brand Name <span className="text-destructive">*</span>
+              </Label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="brandName"
+                  data-ocid="register.brandname.input"
+                  placeholder="Your brand name"
+                  className="pl-9"
+                  value={form.brandName}
+                  onChange={(e) => update("brandName", e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="category"
+                className="text-foreground font-semibold"
+              >
+                Category
+              </Label>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+                <select
+                  id="category"
+                  data-ocid="register.category.select"
+                  value={form.category}
+                  onChange={(e) => update("category", e.target.value)}
+                  className="w-full h-10 pl-9 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Email */}
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-foreground font-semibold">
             Email Address <span className="text-destructive">*</span>
@@ -145,6 +294,7 @@ export default function RegisterScreen({
           </div>
         </div>
 
+        {/* Phone */}
         <div className="space-y-1.5">
           <Label htmlFor="phone" className="text-foreground font-semibold">
             Phone Number <span className="text-destructive">*</span>
@@ -174,6 +324,7 @@ export default function RegisterScreen({
           </div>
         </div>
 
+        {/* Password */}
         <div className="space-y-1.5">
           <Label htmlFor="password" className="text-foreground font-semibold">
             Password <span className="text-destructive">*</span>
@@ -192,15 +343,15 @@ export default function RegisterScreen({
           </div>
         </div>
 
+        {/* Bank Details */}
         <div className="border-t border-border pt-4 space-y-4">
           <p className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Building2 className="w-4 h-4 text-primary" />
-            Bank Account Details
+            Bank Account Details (Optional)
           </p>
-
           <div className="space-y-1.5">
             <Label htmlFor="bankName" className="text-foreground font-semibold">
-              Bank Name <span className="text-destructive">*</span>
+              Bank Name
             </Label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -214,13 +365,12 @@ export default function RegisterScreen({
               />
             </div>
           </div>
-
           <div className="space-y-1.5">
             <Label
               htmlFor="ibanNumber"
               className="text-foreground font-semibold"
             >
-              Account / IBAN Number <span className="text-destructive">*</span>
+              Account / IBAN Number
             </Label>
             <div className="relative">
               <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -251,7 +401,9 @@ export default function RegisterScreen({
           disabled={isLoading}
           className="w-full h-12 text-base font-bold rounded-2xl mt-2"
         >
-          {isLoading ? "Creating account..." : "Create Account"}
+          {isLoading
+            ? "Creating account..."
+            : `Create ${role === "seller" ? "Seller" : "Buyer"} Account`}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">

@@ -1,30 +1,43 @@
 import {
-  blockUser,
-  deleteUserAccount,
-  generatePaymentId,
-  getAllUsers,
-  getUser,
-  incrementFailedLogin,
-  logSecurityEvent,
-  loginUser,
-  registerUser,
-  resetFailedLogins,
-  resetPassword,
-  updateUser,
-} from "@/services/PhonexDB";
-import type { PhonexUser } from "@/services/PhonexDB";
-import { type ReactNode, createContext, useContext, useState } from "react";
+  type BizUser,
+  type UserRole,
+  blockBizUser,
+  deleteBizUser,
+  generateId,
+  getAllBizUsers,
+  getBizUser,
+  loadBizSession,
+  loginBizUser,
+  registerBizUser,
+  resetBizPassword,
+  saveBizSession,
+  seedDemoDataIfEmpty,
+  updateBizUser,
+} from "@/services/PhoenixBusinessDB";
+import {
+  type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 const ADMIN_EMAIL = "admin@phonex.app";
 const ADMIN_PASSWORD = "admin123";
+const FAILED_LOGINS_KEY = "phoenix_failed_logins";
 
 export interface UserData {
+  id: string;
   paymentId: string;
   email: string;
   phone: string;
-  countryCode: string;
   displayName: string;
   password: string;
+  role: UserRole;
+  brandName?: string;
+  category?: string;
+  balance?: number;
+  countryCode?: string;
   bankName?: string;
   ibanNumber?: string;
   avatarUrl?: string;
@@ -34,7 +47,7 @@ interface AuthContextType {
   currentUser: UserData | null;
   isAdmin: boolean;
   login: (email: string, password: string) => boolean;
-  register: (user: Omit<UserData, "paymentId">) => void;
+  register: (user: Omit<UserData, "id" | "paymentId">) => void;
   logout: () => void;
   deleteAccount: () => void;
   updateProfile: (data: Partial<UserData>) => void;
@@ -42,55 +55,66 @@ interface AuthContextType {
   paymentId: string | null;
 }
 
-const SESSION_KEY = "phonex_session_v2";
+const ADMIN_USER_DATA: UserData = {
+  id: "admin-001",
+  paymentId: "ADMIN-001",
+  email: ADMIN_EMAIL,
+  phone: "+92300000000",
+  displayName: "Admin",
+  password: ADMIN_PASSWORD,
+  role: "buyer",
+  avatarUrl: "",
+};
 
-function loadSession(): UserData | null {
+function incrementFailedLogin(email: string): number {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as UserData) : null;
+    const raw = localStorage.getItem(FAILED_LOGINS_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    data[email] = (data[email] || 0) + 1;
+    localStorage.setItem(FAILED_LOGINS_KEY, JSON.stringify(data));
+    return data[email];
   } catch {
-    return null;
+    return 1;
   }
 }
 
-function saveSession(user: UserData | null) {
+function resetFailedLogins(email: string): void {
   try {
-    if (user) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-    } else {
-      localStorage.removeItem(SESSION_KEY);
-    }
+    const raw = localStorage.getItem(FAILED_LOGINS_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    delete data[email];
+    localStorage.setItem(FAILED_LOGINS_KEY, JSON.stringify(data));
   } catch {}
 }
 
-function dbUserToUserData(u: PhonexUser): UserData {
+function bizUserToUserData(u: BizUser): UserData {
   return {
+    id: u.id,
     paymentId: u.paymentId,
     email: u.email,
     phone: u.phone,
-    countryCode: "+92",
     displayName: u.displayName,
     password: u.password,
-    bankName: u.bankName,
-    ibanNumber: u.bankAccount,
+    role: u.role,
+    brandName: u.brandName,
+    category: u.category,
+    balance: u.balance,
     avatarUrl: u.avatarUrl,
   };
 }
 
-const ADMIN_USER_DATA: UserData = {
-  paymentId: "ADMIN-001",
-  email: ADMIN_EMAIL,
-  phone: "+92300000000",
-  countryCode: "+92",
-  displayName: "Admin",
-  password: ADMIN_PASSWORD,
-  avatarUrl: "",
-};
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<UserData | null>(loadSession);
+  const [currentUser, setCurrentUser] = useState<UserData | null>(() => {
+    const session = loadBizSession();
+    if (session) return bizUserToUserData(session);
+    return null;
+  });
+
+  useEffect(() => {
+    seedDemoDataIfEmpty();
+  }, []);
 
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
 
@@ -98,123 +122,116 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Admin hardcoded login
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       setCurrentUser(ADMIN_USER_DATA);
-      saveSession(ADMIN_USER_DATA);
+      saveBizSession({
+        id: ADMIN_USER_DATA.id,
+        paymentId: ADMIN_USER_DATA.paymentId,
+        email: ADMIN_USER_DATA.email,
+        phone: ADMIN_USER_DATA.phone,
+        displayName: ADMIN_USER_DATA.displayName,
+        password: ADMIN_USER_DATA.password,
+        role: ADMIN_USER_DATA.role,
+        balance: 0,
+        subscriptionStatus: "active",
+        subscriptionStart: Date.now(),
+        totalRevenue: 0,
+        totalOrders: 0,
+        postsCount: 0,
+        createdAt: Date.now(),
+      });
       resetFailedLogins(email);
       return true;
     }
 
     // Regular user login
-    const user = loginUser(email, password);
+    const user = loginBizUser(email, password);
     if (user) {
       if (user.blocked) {
-        logSecurityEvent({
-          id: `evt_${Date.now()}`,
-          type: "blocked_attempt",
-          email,
-          timestamp: Date.now(),
-          details: `Blocked user attempted login: ${email}`,
-        });
         return false;
       }
-      const ud = dbUserToUserData(user);
+      const ud = bizUserToUserData(user);
       setCurrentUser(ud);
-      saveSession(ud);
+      saveBizSession(user);
       resetFailedLogins(email);
       return true;
     }
 
-    // Failed login
+    // Failed login tracking
     const failedCount = incrementFailedLogin(email);
-    logSecurityEvent({
-      id: `evt_${Date.now()}`,
-      type: "failed_login",
-      email,
-      timestamp: Date.now(),
-      details: `Failed login attempt #${failedCount} for ${email}`,
-    });
-
     if (failedCount >= 5) {
-      // Auto-lock the account
-      const users = getAllUsers();
+      const users = getAllBizUsers();
       const target = users.find((u) => u.email === email);
       if (target) {
-        blockUser(target.paymentId);
-        logSecurityEvent({
-          id: `evt_${Date.now() + 1}`,
-          type: "account_locked",
-          email,
-          timestamp: Date.now(),
-          details: `Account auto-locked after ${failedCount} failed login attempts`,
-        });
-      } else {
-        logSecurityEvent({
-          id: `evt_${Date.now() + 1}`,
-          type: "suspicious_activity",
-          email,
-          timestamp: Date.now(),
-          details: `${failedCount} failed login attempts for unknown account: ${email}`,
-        });
+        blockBizUser(target.id);
       }
     }
 
     return false;
   };
 
-  const register = (user: Omit<UserData, "paymentId">) => {
-    const paymentId = generatePaymentId();
-    const dbUser: PhonexUser = {
+  const register = (user: Omit<UserData, "id" | "paymentId">) => {
+    const id = generateId("USR");
+    const paymentId = generateId("PHX");
+    const bizUser: BizUser = {
+      id,
       paymentId,
-      username: user.email.split("@")[0],
-      password: user.password,
       email: user.email,
       phone: user.phone,
       displayName: user.displayName || user.email.split("@")[0],
-      bankName: user.bankName || "",
-      bankAccount: user.ibanNumber || "",
-      pocketPin: "",
+      password: user.password,
+      role: user.role || "buyer",
+      brandName: user.brandName,
+      category: user.category,
+      balance: 0,
+      subscriptionStatus: "free",
+      subscriptionStart: Date.now(),
+      totalRevenue: 0,
+      totalOrders: 0,
+      postsCount: 0,
       avatarUrl: user.avatarUrl || "",
       createdAt: Date.now(),
     };
-    registerUser(dbUser);
-    const ud = dbUserToUserData(dbUser);
+    registerBizUser(bizUser);
+    const ud = bizUserToUserData(bizUser);
     setCurrentUser(ud);
-    saveSession(ud);
+    saveBizSession(bizUser);
   };
 
   const logout = () => {
     setCurrentUser(null);
-    saveSession(null);
+    saveBizSession(null);
   };
 
   const deleteAccount = () => {
     if (currentUser) {
-      deleteUserAccount(currentUser.paymentId);
+      deleteBizUser(currentUser.id);
       setCurrentUser(null);
-      saveSession(null);
+      saveBizSession(null);
     }
   };
 
   const updateProfile = (data: Partial<UserData>) => {
     if (currentUser) {
       const updated = { ...currentUser, ...data };
-      updateUser(currentUser.paymentId, {
+      updateBizUser(currentUser.id, {
         displayName: updated.displayName,
         email: updated.email,
         phone: updated.phone,
-        bankName: updated.bankName,
-        bankAccount: updated.ibanNumber,
         avatarUrl: updated.avatarUrl,
+        brandName: updated.brandName,
+        category: updated.category,
       });
       setCurrentUser(updated);
-      saveSession(updated);
+      // Update session with latest bizUser data
+      const freshUser = getBizUser(currentUser.id);
+      if (freshUser) saveBizSession(freshUser);
     }
   };
 
   const forgotPassword = (email: string): boolean => {
-    const users = getAllUsers();
+    const users = getAllBizUsers();
     const user = users.find((u) => u.email === email);
     if (!user) return false;
-    return resetPassword(email, user.phone);
+    return resetBizPassword(email, user.phone);
   };
 
   return (

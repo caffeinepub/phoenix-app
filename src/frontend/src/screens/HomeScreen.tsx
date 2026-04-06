@@ -18,12 +18,13 @@ import {
   Moon,
   Phone,
   Shield,
-  Sparkles,
+  ShoppingBag,
+  Star,
   Sun,
+  TrendingUp,
   User,
   Video,
   Wallet,
-  Wifi,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -31,12 +32,18 @@ const phonexLogo = "/assets/uploads/Phonex-Icon-1-1.jpg";
 import { useAuth } from "../contexts/AuthContext";
 import { useSyncStatus } from "../contexts/SyncContext";
 import { useTheme } from "../contexts/ThemeContext";
+import {
+  getBizUser,
+  getSellerMonthlyStats,
+  getSellerSubscriptionInfo,
+  getTopBrands,
+  seedDemoDataIfEmpty,
+} from "../services/PhoenixBusinessDB";
 import CallsTab from "../tabs/CallsTab";
 import ChatsTab from "../tabs/ChatsTab";
 import EmailTab from "../tabs/EmailTab";
-import FeelsTab from "../tabs/FeelsTab";
 import PocketTab from "../tabs/PocketTab";
-import SmartTab from "../tabs/SmartTab";
+import SalesTab from "../tabs/SalesTab";
 
 interface Props {
   onLogout: () => void;
@@ -47,11 +54,10 @@ interface Props {
 const TABS = [
   { id: "home", label: "Home", icon: Home },
   { id: "chats", label: "Chats", icon: MessageCircle },
-  { id: "feels", label: "Feels", icon: Sparkles },
+  { id: "sales", label: "Sales", icon: ShoppingBag },
   { id: "email", label: "Email", icon: Mail },
   { id: "pocket", label: "Pocket", icon: Wallet },
   { id: "calls", label: "Calls", icon: Phone },
-  { id: "smart", label: "Smart", icon: Wifi },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -102,80 +108,52 @@ function getStatCount(key: string, filterFn?: (item: any) => boolean): number {
   }
 }
 
-function DashboardTab({ userName }: { userName: string }) {
+// ── Buyer Dashboard ────────────────────────────────────────────────────────────
+function BuyerDashboard({ userName }: { userName: string }) {
   const { isDark } = useTheme();
-  const [stats, setStats] = useState({
-    textNotes: 0,
-    voiceNotes: 0,
-    videoNotes: 0,
-    emails: 0,
-    feels: 0,
-    calls: 0,
-  });
+  const [topBrands, setTopBrands] = useState<ReturnType<typeof getTopBrands>>(
+    [],
+  );
+  const [stats, setStats] = useState({ emails: 0, calls: 0, chats: 0 });
 
   useEffect(() => {
+    seedDemoDataIfEmpty();
+    setTopBrands(getTopBrands(10));
     setStats({
-      textNotes: getStatCount(
-        "phonex_messages",
-        (m) => m.messageType === "text" || m.type === "text",
-      ),
-      voiceNotes: getStatCount(
-        "phonex_messages",
-        (m) => m.messageType === "voice" || m.type === "voice",
-      ),
-      videoNotes: getStatCount(
-        "phonex_messages",
-        (m) => m.messageType === "video" || m.type === "video",
-      ),
       emails: getStatCount("phonex_emails"),
-      feels: getStatCount("phonex_feels"),
       calls: getStatCount("phonex_calls"),
+      chats: getStatCount("phonex_messages"),
     });
   }, []);
 
   const statTiles = [
+    { label: "Emails", value: stats.emails, icon: Mail, color: "#f97316" },
+    { label: "Calls", value: stats.calls, icon: Phone, color: "#14b8a6" },
     {
-      label: "Text Notes",
-      value: stats.textNotes,
+      label: "Chats",
+      value: stats.chats,
       icon: MessageSquare,
       color: "#3b82f6",
     },
-    {
-      label: "Voice Notes",
-      value: stats.voiceNotes,
-      icon: Mic,
-      color: "#22c55e",
-    },
-    {
-      label: "Video Notes",
-      value: stats.videoNotes,
-      icon: Video,
-      color: "#a855f7",
-    },
-    {
-      label: "Emails",
-      value: stats.emails,
-      icon: Mail,
-      color: "#f97316",
-    },
-    {
-      label: "Feels",
-      value: stats.feels,
-      icon: Sparkles,
-      color: "#ec4899",
-    },
-    {
-      label: "Calls",
-      value: stats.calls,
-      icon: Phone,
-      color: "#14b8a6",
-    },
+  ];
+
+  const BRAND_COLORS = [
+    "#6366f1",
+    "#0ea5e9",
+    "#f97316",
+    "#ec4899",
+    "#22c55e",
+    "#eab308",
+    "#8b5cf6",
+    "#14b8a6",
+    "#ef4444",
+    "#84cc16",
   ];
 
   return (
     <div className="overflow-y-auto h-full pb-6">
-      {/* Large Logo Section */}
-      <div className="flex flex-col items-center pt-8 pb-6">
+      {/* Logo + Greeting */}
+      <div className="flex flex-col items-center pt-8 pb-4">
         <motion.div
           className="relative"
           animate={{
@@ -222,15 +200,94 @@ function DashboardTab({ userName }: { userName: string }) {
             color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,45,107,0.65)",
           }}
         >
-          Welcome, <span className="font-semibold">{userName}</span>
+          Welcome, <span className="font-semibold">{userName}</span>!
         </motion.p>
       </div>
 
-      {/* User Summary Board */}
+      {/* Top Brands Section */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
+        className="mx-4 rounded-2xl overflow-hidden mb-4"
+        style={{
+          background: isDark ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.95)",
+          border: isDark
+            ? "1px solid rgba(96,165,250,0.3)"
+            : "1px solid rgba(15,45,107,0.12)",
+          boxShadow: isDark
+            ? "0 0 30px rgba(96,165,250,0.08)"
+            : "0 2px 16px rgba(15,45,107,0.08)",
+        }}
+      >
+        <div
+          className="px-4 py-3"
+          style={{
+            background: isDark
+              ? "linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(236,72,153,0.1) 100%)"
+              : "linear-gradient(90deg, rgba(99,102,241,0.06) 0%, rgba(236,72,153,0.04) 100%)",
+            borderBottom: isDark
+              ? "1px solid rgba(96,165,250,0.2)"
+              : "1px solid rgba(15,45,107,0.08)",
+          }}
+        >
+          <p
+            className="text-sm font-bold flex items-center gap-2"
+            style={{ color: isDark ? "#93c5fd" : "#0f2d6b" }}
+          >
+            <Star className="w-4 h-4" />
+            Top Brands
+          </p>
+        </div>
+        {topBrands.length === 0 ? (
+          <div className="px-4 py-8 text-center">
+            <ShoppingBag className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No brands yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 p-3">
+            {topBrands.map((brand, idx) => {
+              const color = BRAND_COLORS[idx % BRAND_COLORS.length];
+              return (
+                <motion.div
+                  key={brand.sellerId}
+                  data-ocid={`dashboard.brands.item.${idx + 1}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5 + idx * 0.04 }}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${color}18 0%, ${color}08 100%)`,
+                    border: `1px solid ${color}25`,
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm"
+                    style={{ background: `${color}25`, color }}
+                  >
+                    {brand.brandName.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="font-bold text-xs text-foreground text-center leading-tight line-clamp-1">
+                    {brand.brandName}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {brand.category}
+                  </p>
+                  <p className="text-[10px] font-semibold" style={{ color }}>
+                    {brand.totalOrders} orders
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+
+      {/* Summary Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55 }}
         className="mx-4 rounded-2xl overflow-hidden"
         style={{
           background: isDark ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.95)",
@@ -238,7 +295,7 @@ function DashboardTab({ userName }: { userName: string }) {
             ? "1px solid rgba(96,165,250,0.3)"
             : "1px solid rgba(15,45,107,0.12)",
           boxShadow: isDark
-            ? "0 0 30px rgba(96,165,250,0.08), inset 0 1px 0 rgba(255,255,255,0.05)"
+            ? "0 0 30px rgba(96,165,250,0.08)"
             : "0 2px 16px rgba(15,45,107,0.08)",
         }}
       >
@@ -257,10 +314,10 @@ function DashboardTab({ userName }: { userName: string }) {
             className="text-sm font-bold"
             style={{ color: isDark ? "#93c5fd" : "#0f2d6b" }}
           >
-            {userName}'s Summary Board
+            {userName}'s Summary
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-px p-0.5">
+        <div className="grid grid-cols-3 gap-px p-0.5">
           {statTiles.map((tile, idx) => {
             const Icon = tile.icon;
             return (
@@ -269,27 +326,26 @@ function DashboardTab({ userName }: { userName: string }) {
                 data-ocid={`dashboard.stats.item.${idx + 1}`}
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + idx * 0.06 }}
-                whileHover={{ scale: 1.02 }}
-                className="flex flex-col items-center gap-1.5 py-4 rounded-xl cursor-default transition-transform"
+                transition={{ delay: 0.6 + idx * 0.06 }}
+                className="flex flex-col items-center gap-1.5 py-4 rounded-xl cursor-default"
                 style={{
                   background: `linear-gradient(135deg, ${tile.color}20 0%, ${tile.color}08 100%)`,
                   border: `1px solid ${tile.color}30`,
                 }}
               >
                 <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
                   style={{
                     background: `${tile.color}25`,
-                    boxShadow: `0 0 12px 4px ${tile.color}50`,
+                    boxShadow: `0 0 10px 3px ${tile.color}40`,
                     animation: "pulseGlowOuter 2s ease-in-out infinite",
                     animationDelay: `${idx * 0.3}s`,
                   }}
                 >
-                  <Icon style={{ color: tile.color }} className="w-6 h-6" />
+                  <Icon style={{ color: tile.color }} className="w-5 h-5" />
                 </div>
                 <span
-                  className="text-3xl font-black leading-none"
+                  className="text-2xl font-black leading-none"
                   style={{ color: tile.color }}
                 >
                   {tile.value}
@@ -311,6 +367,264 @@ function DashboardTab({ userName }: { userName: string }) {
   );
 }
 
+// ── Seller Dashboard ───────────────────────────────────────────────────────────
+function SellerDashboard({
+  userId,
+  brandName,
+}: { userId: string; brandName: string }) {
+  const { isDark } = useTheme();
+  const [monthlyStats, setMonthlyStats] = useState<ReturnType<
+    typeof getSellerMonthlyStats
+  > | null>(null);
+  const [subInfo, setSubInfo] = useState<ReturnType<
+    typeof getSellerSubscriptionInfo
+  > | null>(null);
+
+  useEffect(() => {
+    seedDemoDataIfEmpty();
+    const stats = getSellerMonthlyStats(userId);
+    setMonthlyStats(stats);
+    const seller = getBizUser(userId);
+    if (seller) setSubInfo(getSellerSubscriptionInfo(seller));
+  }, [userId]);
+
+  const metricCards = [
+    {
+      label: "Balance (PKR)",
+      value: monthlyStats?.balance?.toFixed(0) ?? "0",
+      icon: Wallet,
+      color: "#3b82f6",
+    },
+    {
+      label: "Revenue (30d)",
+      value: monthlyStats?.monthlyRevenue?.toFixed(0) ?? "0",
+      icon: TrendingUp,
+      color: "#22c55e",
+    },
+    {
+      label: "Orders (30d)",
+      value: monthlyStats?.monthlyOrders ?? 0,
+      icon: ShoppingBag,
+      color: "#f97316",
+    },
+    {
+      label: "Active Posts",
+      value: monthlyStats?.activePosts ?? 0,
+      icon: Star,
+      color: "#a855f7",
+    },
+  ];
+
+  return (
+    <div className="overflow-y-auto h-full pb-6">
+      {/* Logo + Greeting */}
+      <div className="flex flex-col items-center pt-8 pb-4">
+        <motion.div
+          className="relative"
+          animate={{
+            filter: [
+              "drop-shadow(0 0 12px #60a5fa) drop-shadow(0 0 24px #60a5fa)",
+              "drop-shadow(0 0 16px #a78bfa) drop-shadow(0 0 32px #a78bfa)",
+              "drop-shadow(0 0 14px #34d399) drop-shadow(0 0 28px #34d399)",
+              "drop-shadow(0 0 16px #f472b6) drop-shadow(0 0 30px #f472b6)",
+              "drop-shadow(0 0 12px #60a5fa) drop-shadow(0 0 24px #60a5fa)",
+            ],
+            scale: [1, 1.04, 1, 1.04, 1],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        >
+          <img
+            src={phonexLogo}
+            alt="Phonex Logo"
+            className="w-24 h-24 rounded-full object-cover"
+            style={{
+              border: "3px solid rgba(96,165,250,0.5)",
+              boxShadow: "inset 0 0 20px rgba(96,165,250,0.1)",
+            }}
+          />
+        </motion.div>
+        <motion.h1
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-3 font-black text-2xl tracking-tight"
+          style={{ color: isDark ? "#ffffff" : "#0f2d6b" }}
+        >
+          {brandName}
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35 }}
+          className="text-sm mt-1 opacity-90"
+          style={{
+            color: isDark ? "rgba(255,255,255,0.65)" : "rgba(15,45,107,0.65)",
+          }}
+        >
+          Seller Dashboard
+        </motion.p>
+        {subInfo && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className={`mt-2 text-xs px-3 py-1 rounded-full font-semibold border ${
+              subInfo.canPost
+                ? "bg-green-500/15 text-green-700 border-green-500/30"
+                : "bg-red-500/15 text-red-700 border-red-500/30"
+            }`}
+          >
+            {subInfo.status}
+          </motion.span>
+        )}
+      </div>
+
+      {/* Metrics Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mx-4 rounded-2xl overflow-hidden mb-4"
+        style={{
+          background: isDark ? "rgba(30,41,59,0.8)" : "rgba(255,255,255,0.95)",
+          border: isDark
+            ? "1px solid rgba(96,165,250,0.3)"
+            : "1px solid rgba(15,45,107,0.12)",
+          boxShadow: isDark
+            ? "0 0 30px rgba(96,165,250,0.08)"
+            : "0 2px 16px rgba(15,45,107,0.08)",
+        }}
+      >
+        <div
+          className="px-4 py-3"
+          style={{
+            background: isDark
+              ? "linear-gradient(90deg, rgba(59,130,246,0.2) 0%, rgba(168,85,247,0.1) 100%)"
+              : "linear-gradient(90deg, rgba(15,45,107,0.06) 0%, rgba(168,85,247,0.04) 100%)",
+            borderBottom: isDark
+              ? "1px solid rgba(96,165,250,0.2)"
+              : "1px solid rgba(15,45,107,0.08)",
+          }}
+        >
+          <p
+            className="text-sm font-bold"
+            style={{ color: isDark ? "#93c5fd" : "#0f2d6b" }}
+          >
+            Monthly Overview
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-px p-0.5">
+          {metricCards.map((card, idx) => {
+            const Icon = card.icon;
+            return (
+              <motion.div
+                key={card.label}
+                data-ocid={`dashboard.seller.item.${idx + 1}`}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + idx * 0.06 }}
+                className="flex flex-col items-center gap-1.5 py-4 rounded-xl"
+                style={{
+                  background: `linear-gradient(135deg, ${card.color}20 0%, ${card.color}08 100%)`,
+                  border: `1px solid ${card.color}30`,
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{
+                    background: `${card.color}25`,
+                    boxShadow: `0 0 10px 3px ${card.color}40`,
+                    animation: "pulseGlowOuter 2s ease-in-out infinite",
+                    animationDelay: `${idx * 0.3}s`,
+                  }}
+                >
+                  <Icon style={{ color: card.color }} className="w-5 h-5" />
+                </div>
+                <span
+                  className="text-2xl font-black leading-none"
+                  style={{ color: card.color }}
+                >
+                  {card.value}
+                </span>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{
+                    color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {card.label}
+                </span>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Post Breakdown */}
+      {monthlyStats && monthlyStats.postBreakdown.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mx-4 rounded-2xl overflow-hidden"
+          style={{
+            background: isDark
+              ? "rgba(30,41,59,0.8)"
+              : "rgba(255,255,255,0.95)",
+            border: isDark
+              ? "1px solid rgba(96,165,250,0.3)"
+              : "1px solid rgba(15,45,107,0.12)",
+          }}
+        >
+          <div
+            className="px-4 py-3"
+            style={{
+              background: isDark
+                ? "linear-gradient(90deg, rgba(34,197,94,0.2) 0%, rgba(59,130,246,0.1) 100%)"
+                : "linear-gradient(90deg, rgba(34,197,94,0.06) 0%, rgba(59,130,246,0.04) 100%)",
+              borderBottom: isDark
+                ? "1px solid rgba(96,165,250,0.2)"
+                : "1px solid rgba(15,45,107,0.08)",
+            }}
+          >
+            <p
+              className="text-sm font-bold"
+              style={{ color: isDark ? "#93c5fd" : "#0f2d6b" }}
+            >
+              Posts Performance
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            {monthlyStats.postBreakdown.map((post, idx) => (
+              <div
+                key={post.postId}
+                data-ocid={`dashboard.posts.item.${idx + 1}`}
+                className="flex items-center justify-between px-4 py-3"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-foreground truncate">
+                    {post.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {post.orders} orders
+                  </p>
+                </div>
+                <span className="font-bold text-sm text-emerald-600">
+                  PKR {post.revenue.toFixed(0)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 export default function HomeScreen({
   onLogout,
   onNavigateProfile,
@@ -321,14 +635,24 @@ export default function HomeScreen({
   const { currentUser, isAdmin } = useAuth();
   const { toggleTheme, isDark, darkNameColor } = useTheme();
 
+  const isSeller = currentUser?.role === "seller";
+
   const tabContent: Record<TabId, React.ReactNode> = {
-    home: <DashboardTab userName={currentUser?.displayName || "User"} />,
+    home: isSeller ? (
+      <SellerDashboard
+        userId={currentUser?.id ?? ""}
+        brandName={
+          currentUser?.brandName || currentUser?.displayName || "Brand"
+        }
+      />
+    ) : (
+      <BuyerDashboard userName={currentUser?.displayName || "User"} />
+    ),
     chats: <ChatsTab />,
-    feels: <FeelsTab />,
+    sales: <SalesTab />,
     calls: <CallsTab />,
     email: <EmailTab />,
     pocket: <PocketTab />,
-    smart: <SmartTab />,
   };
 
   return (
@@ -490,7 +814,7 @@ export default function HomeScreen({
                   <Icon
                     className={`w-[18px] h-[18px] transition-colors ${
                       isActive
-                        ? tab.id === "feels"
+                        ? tab.id === "sales"
                           ? "text-pink-500"
                           : tab.id === "calls"
                             ? "text-emerald-500"
@@ -503,7 +827,7 @@ export default function HomeScreen({
                   <span
                     className={`text-[9px] font-body transition-colors leading-none ${
                       isActive
-                        ? tab.id === "feels"
+                        ? tab.id === "sales"
                           ? "text-pink-500 font-semibold"
                           : tab.id === "calls"
                             ? "text-emerald-500 font-semibold"
